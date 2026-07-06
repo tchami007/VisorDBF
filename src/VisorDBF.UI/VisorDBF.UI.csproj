@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>VisorDBF.UI</RootNamespace>
+    <AssemblyName>VisorDBF</AssemblyName>
+    <!-- ApplicationIcon deferred to Phase 4: Resources/app.ico -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VisorDBF.Core\VisorDBF.Core.csproj" />
+  </ItemGroup>
+</Project>

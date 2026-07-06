@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>VisorDBF.Core</RootNamespace>
+    <AssemblyName>VisorDBF.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DbfDataReader" Version="0.4.*" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.*" />
+  </ItemGroup>
+</Project>

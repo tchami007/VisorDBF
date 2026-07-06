@@ -1,1 +1,14 @@
 .planning/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+TestResults/
+publish/
+
+# NuGet
+*.nupkg
+packages/
