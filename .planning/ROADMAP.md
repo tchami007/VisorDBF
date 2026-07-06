@@ -14,6 +14,7 @@
 **Goal:** Tener una solucion C# / WPF compilable con la arquitectura base (Core + UI), capacidad de abrir y leer archivos DBF correctamente — incluyendo deteccion de codificacion via Language Driver ID — y visualizar su contenido en la grilla principal.
 
 **Success Criteria:**
+
 1. La solucion Visual Studio compila sin errores con los proyectos VisorDBF.Core y VisorDBF.UI separados.
 2. El usuario puede abrir un archivo DBF y ver sus registros y columnas en la grilla.
 3. La codificacion se detecta automaticamente via Language Driver ID y se muestra en la barra de estado.
@@ -25,11 +26,12 @@
 OPEN-01, OPEN-02, OPEN-03, OPEN-04, ENC-01, VIEW-01, VIEW-02, VIEW-03, VIEW-04, VIEW-05
 
 **Plans:**
-- [x] 1.1 — Estructura de solucion y proyectos (.sln, VisorDBF.Core, VisorDBF.UI, carpetas, .gitignore) ✓ 2026-07-06
-- [ ] 1.2 — Entidades del dominio (DbfFile, DbfField, DbfFieldType, DbfRecord, enums)
-- [ ] 1.3 — Servicios de lectura DBF (IDbfReaderService, DbfReaderService con DbfDataReader, EncodingDetectionService)
-- [ ] 1.4 — Ventana principal y grilla (MainWindow, MainViewModel, DataGrid con binding, barra de estado)
-- [ ] 1.5 — Flujo de apertura de archivo (dialogo de sistema, carga asincrona, dialogo de codificacion manual)
+5/5 plans complete
+
+- [x] 1.2 — Entidades del dominio (DbfFile, DbfField, DbfFieldType, DbfRecord, enums) ✓ 2026-07-06
+- [x] 1.3 — Servicios de lectura DBF (IDbfReaderService, DbfReaderService con DbfDataReader, EncodingDetectionService) ✓ 2026-07-06
+- [x] 1.4 — Ventana principal y grilla (MainWindow, MainViewModel, DataGrid con binding, barra de estado) ✓ 2026-07-06
+- [x] 1.5 — Flujo de apertura de archivo (dialogo de sistema, carga asincrona, dialogo de codificacion manual) ✓ 2026-07-06
 
 ---
 
@@ -38,6 +40,7 @@ OPEN-01, OPEN-02, OPEN-03, OPEN-04, ENC-01, VIEW-01, VIEW-02, VIEW-03, VIEW-04, 
 **Goal:** El usuario puede configurar todos los parametros de exportacion (separadores, encabezado, filas, codificacion de salida) y exportar el contenido completo a un archivo TXT de forma asincrona con indicador de progreso y capacidad de cancelacion.
 
 **Success Criteria:**
+
 1. El usuario puede abrir la pantalla de configuracion y modificar separador de columnas, delimitador final, encabezado, limite de filas y codificacion de salida.
 2. La exportacion genera un archivo TXT con el separador configurado entre columnas.
 3. El delimitador final de fila, si esta configurado, aparece despues del ultimo campo en cada linea.
@@ -50,6 +53,7 @@ OPEN-01, OPEN-02, OPEN-03, OPEN-04, ENC-01, VIEW-01, VIEW-02, VIEW-03, VIEW-04, 
 EXPO-01, EXPO-02, EXPO-03, EXPO-04, EXPO-05, SEP-01, SEP-02, ROWS-01, ROWS-02, ENC-02
 
 **Plans:**
+
 - [ ] 2.1 — Modelo ExportConfiguration y pantalla de configuracion de exportacion (UI + ViewModel)
 - [ ] 2.2 — Servicio de exportacion TXT (IExportService, TxtExportService con StreamWriter, IProgress<int>, CancellationToken)
 - [ ] 2.3 — Dialogo de progreso de exportacion (ExportProgressDialog, barra determinista, boton cancelar)
@@ -62,6 +66,7 @@ EXPO-01, EXPO-02, EXPO-03, EXPO-04, EXPO-05, SEP-01, SEP-02, ROWS-01, ROWS-02, E
 **Goal:** El usuario puede asignar cadenas de formato especificas a columnas de tipo DATE, DATETIME, TIME y NUMERIC. Los formatos se aplican tanto en la grilla como en la exportacion. La pantalla de formatos muestra una previa en tiempo real.
 
 **Success Criteria:**
+
 1. La pantalla de formatos muestra todas las columnas del DBF cargado con su tipo de dato.
 2. Solo las columnas de tipo DATE, DATETIME, TIME y NUMERIC tienen el campo de formato habilitado.
 3. Al ingresar una cadena de formato valida, la columna "Previa" muestra el valor formateado con datos reales en tiempo real.
@@ -73,6 +78,7 @@ EXPO-01, EXPO-02, EXPO-03, EXPO-04, EXPO-05, SEP-01, SEP-02, ROWS-01, ROWS-02, E
 FMT-01, FMT-02, FMT-03, FMT-04, FMT-05
 
 **Plans:**
+
 - [ ] 3.1 — Modelo ColumnFormatConfiguration y servicio de formateo (ColumnFormatService con validacion)
 - [ ] 3.2 — Pantalla de formatos de columna (ColumnFormatsWindow con DataGrid editable, columna Previa, panel de ayuda)
 - [ ] 3.3 — Integracion de formatos en TxtExportService y en la grilla principal
@@ -84,6 +90,7 @@ FMT-01, FMT-02, FMT-03, FMT-04, FMT-05
 **Goal:** La configuracion del usuario persiste entre sesiones, los perfiles de exportacion son guardables y recargables, la lista de recientes funciona correctamente, y la aplicacion esta lista para distribucion como ejecutable self-contained.
 
 **Success Criteria:**
+
 1. Al cerrar y reabrir la aplicacion, la configuracion anterior (separadores, encabezado, formatos, ultimo perfil) se restaura.
 2. El usuario puede guardar, cargar y eliminar perfiles de exportacion con nombre.
 3. Al iniciar, se carga automaticamente el ultimo perfil utilizado.
@@ -97,6 +104,7 @@ FMT-01, FMT-02, FMT-03, FMT-04, FMT-05
 OPEN-05, PROF-01, PROF-02, PROF-03, PROF-04, PERS-01, PERS-02, PERS-03
 
 **Plans:**
+
 - [ ] 4.1 — Servicio de persistencia (ISettingsService, JsonSettingsService, esquema ApplicationSettings + ExportProfile)
 - [ ] 4.2 — Gestion de perfiles en UI (selector en barra de herramientas, CRUD de perfiles en pantalla de configuracion)
 - [ ] 4.3 — Lista de archivos recientes (menu Recientes, deteccion de archivos faltantes, limite de entradas)
@@ -129,4 +137,4 @@ Fases secuenciales. Dentro de cada fase, los planes pueden ejecutarse en paralel
 
 ---
 *Roadmap created: 2026-07-06*
-*Last updated: 2026-07-06 after Plan 1.1 completion*
+*Last updated: 2026-07-06 after Phase 1 completion (all 5 plans complete)*
