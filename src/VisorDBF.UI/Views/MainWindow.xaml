@@ -1,0 +1,300 @@
+<Window x:Class="VisorDBF.UI.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:VisorDBF.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Height="550" Width="900"
+        MinHeight="500" MinWidth="800"
+        Background="#F5F5F5"
+        FontFamily="Segoe UI">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenFileCommand}"/>
+    </Window.InputBindings>
+
+    <DockPanel>
+
+        <!-- ===================== MENU ===================== -->
+        <Menu DockPanel.Dock="Top" Background="#E8E8E8" FontSize="13">
+            <MenuItem Header="Archivo">
+                <MenuItem Header="Abrir"
+                          Command="{Binding OpenFileCommand}"
+                          InputGestureText="Ctrl+O"/>
+                <MenuItem Header="Recientes" IsEnabled="False"/>
+                <Separator/>
+                <MenuItem Header="Cerrar" IsEnabled="False"/>
+                <Separator/>
+                <MenuItem Header="Salir" Click="MenuItem_Salir_Click"/>
+            </MenuItem>
+            <MenuItem Header="Exportar">
+                <MenuItem Header="Exportar a TXT..." IsEnabled="False"/>
+            </MenuItem>
+            <MenuItem Header="Configuración">
+                <MenuItem Header="Configuración de exportación..." IsEnabled="False"/>
+                <MenuItem Header="Formatos de columnas..." IsEnabled="False"/>
+                <MenuItem Header="Codificación de lectura..."
+                          Command="{Binding ChangeEncodingCommand}"
+                          IsEnabled="False"/>
+            </MenuItem>
+            <MenuItem Header="Ayuda">
+                <MenuItem Header="Acerca de..." IsEnabled="False"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- ===================== TOOLBAR ===================== -->
+        <ToolBarTray DockPanel.Dock="Top" Background="#E8E8E8" IsLocked="True">
+            <ToolBar Background="#E8E8E8" Height="32" Band="1" BandIndex="1">
+                <!-- Abrir -->
+                <Button Command="{Binding OpenFileCommand}"
+                        ToolTip="Abrir archivo DBF (Ctrl+O)"
+                        AutomationProperties.Name="Abrir archivo DBF"
+                        Padding="8,4">
+                    <TextBlock Text="&#xE8E5;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                </Button>
+                <Separator/>
+                <!-- Exportar — deshabilitado hasta Phase 2 -->
+                <Button IsEnabled="False"
+                        ToolTip="Exportar a TXT..."
+                        Padding="8,4">
+                    <TextBlock Text="&#xE78C;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                </Button>
+                <!-- Configuracion — deshabilitado hasta Phase 2 -->
+                <Button IsEnabled="False"
+                        ToolTip="Configuración de exportación"
+                        Padding="8,4">
+                    <TextBlock Text="&#xE713;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- ===================== STATUSBAR ===================== -->
+        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="#E8E8E8">
+            <!-- Segmento izquierdo: icono DB + nombre de archivo (stretch) -->
+            <StatusBarItem HorizontalContentAlignment="Stretch">
+                <DockPanel>
+                    <TextBlock Text="&#xECAA;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               Foreground="#5E5E5E"
+                               Margin="4,0,4,0"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+            </StatusBarItem>
+            <Separator/>
+            <!-- Segmento central: contador de registros (fixed 120px) -->
+            <StatusBarItem Width="120">
+                <TextBlock FontSize="11" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="—"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasFile}" Value="True">
+                                    <Setter Property="Text"
+                                            Value="{Binding Records.Count, StringFormat='{}{0} registros'}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                    <Setter Property="Text" Value="Cargando..."/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator/>
+            <!-- Segmento derecho: encoding activo clickeable (fixed 100px) -->
+            <StatusBarItem Width="100">
+                <Button Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        Command="{Binding ChangeEncodingCommand}"
+                        ToolTip="Cambiar codificación de lectura"
+                        Cursor="Hand">
+                    <TextBlock FontSize="11" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="—"/>
+                                <Setter Property="Foreground" Value="#5E5E5E"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasFile}" Value="True">
+                                        <Setter Property="Text"
+                                                Value="{Binding ActiveEncoding.WebName}"/>
+                                        <Setter Property="Foreground" Value="#0078D4"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Button>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ===================== MAIN CONTENT AREA ===================== -->
+        <Grid>
+
+            <!-- DataGrid con virtualizacion -->
+            <DataGrid x:Name="MainDataGrid"
+                      ItemsSource="{Binding Records}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="False"
+                      ScrollViewer.CanContentScroll="True"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#D1D1D1"
+                      Background="#FFFFFF"
+                      AlternatingRowBackground="#FAFAFA"
+                      ColumnHeaderHeight="44"
+                      FontSize="13">
+
+                <!-- Visibilidad: ocultar cuando no hay archivo cargado -->
+                <DataGrid.Style>
+                    <Style TargetType="DataGrid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasFile}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Style>
+
+                <!-- Estilo de fila: registros eliminados + hover -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDeleted}" Value="True">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                                <Setter Property="Foreground" Value="#808080"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#EFF6FC"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <!-- Estilo de header de columna -->
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#E8E8E8"/>
+                        <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        <Setter Property="Padding" Value="4,3,4,3"/>
+                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <!-- Estilo de celda -->
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="4,2"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#0078D4"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+
+            </DataGrid>
+
+            <!-- EmptyStatePanel: visible cuando no hay archivo cargado -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasFile}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Icono base de datos -->
+                    <TextBlock Text="&#xECAA;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="48"
+                               Foreground="#A0A0A0"
+                               HorizontalAlignment="Center"/>
+                    <!-- Mensaje principal -->
+                    <TextBlock Text="No hay ningún archivo abierto"
+                               FontSize="20"
+                               FontWeight="Light"
+                               Foreground="#5E5E5E"
+                               HorizontalAlignment="Center"
+                               Margin="0,32,0,0"/>
+                    <!-- Subtitulo -->
+                    <TextBlock Text="Seleccione un archivo DBF para visualizar su contenido"
+                               FontSize="13"
+                               Foreground="#A0A0A0"
+                               HorizontalAlignment="Center"
+                               Margin="0,8,0,0"/>
+                    <!-- CTA: Abrir archivo -->
+                    <Button Content="Abrir archivo DBF"
+                            Command="{Binding OpenFileCommand}"
+                            HorizontalAlignment="Center"
+                            Margin="0,24,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#0078D4"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Padding" Value="12,8"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="FontSize" Value="13"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#106EBE"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter Property="Background" Value="#005A9E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+        </Grid>
+    </DockPanel>
+</Window>

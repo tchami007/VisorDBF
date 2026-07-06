@@ -103,6 +103,14 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 
 ---
 
+## Quick Tasks Completed
+
+| Task ID | Slug | Date | Description | Status |
+|---------|------|------|-------------|--------|
+| 260706-od9 | ventana-en-blanco | 2026-07-06 | Fix blank window — add DataGrid Visibility binding on HasFile | complete |
+
+---
+
 ## Next Action
 
 ```
