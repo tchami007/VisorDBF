@@ -53,15 +53,18 @@ OPEN-01, OPEN-02, OPEN-03, OPEN-04, ENC-01, VIEW-01, VIEW-02, VIEW-03, VIEW-04, 
 EXPO-01, EXPO-02, EXPO-03, EXPO-04, EXPO-05, SEP-01, SEP-02, ROWS-01, ROWS-02, ENC-02
 
 **Plans:**
-**Wave 1** *(parallel — ExportConfiguration model + TxtExportService service)*
-- [ ] 2.1 — Modelo ExportConfiguration y pantalla de configuracion de exportacion (UI + ViewModel)
-- [ ] 2.2 — Servicio de exportacion TXT (IExportService, TxtExportService con StreamWriter, IProgress<int>, CancellationToken)
+4/4 plans complete
+
+- [x] 2.1 — Modelo ExportConfiguration y pantalla de configuracion de exportacion (UI + ViewModel)
+- [x] 2.2 — Servicio de exportacion TXT (IExportService, TxtExportService con StreamWriter, IProgress<int>, CancellationToken)
 
 **Wave 2** *(blocked on Wave 1 — progress dialog depends on TxtExportService)*
-- [ ] 2.3 — Dialogo de progreso de exportacion (ExportProgressDialog, barra determinista, boton cancelar)
+
+- [x] 2.3 — Dialogo de progreso de exportacion (ExportProgressDialog, barra determinista, boton cancelar)
 
 **Wave 3** *(blocked on Waves 1-2 — integration requires all components)*
-- [ ] 2.4 — Integracion: flujo completo apertura → configuracion → exportacion → confirmacion
+
+- [x] 2.4 — Integracion: flujo completo apertura → configuracion → exportacion → confirmacion
 
 ---
 
