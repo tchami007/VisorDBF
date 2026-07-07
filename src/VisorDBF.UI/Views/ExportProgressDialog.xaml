@@ -1,0 +1,147 @@
+<Window x:Class="VisorDBF.UI.Views.ExportProgressDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:VisorDBF.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Width="440" Height="200"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#FFFFFF"
+        FontFamily="Segoe UI"
+        Closing="Window_Closing">
+
+    <ContentControl Content="{Binding}">
+        <ContentControl.Resources>
+            <DataTemplate x:Key="ProgressTemplate">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="16,8,16,16">
+                        <Button Content="Cancelar"
+                                Command="{Binding CancelCommand}"
+                                IsEnabled="{Binding IsExporting}"
+                                Width="88" Height="30"
+                                ToolTip="Cancelar la exportacion y eliminar el archivo parcial"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
+                    </StackPanel>
+                    <StackPanel Margin="16,16,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ProgressText}"
+                                   FontSize="13" Foreground="#1A1A1A"
+                                   Margin="0,0,0,8"/>
+                        <ProgressBar Minimum="0"
+                                     Maximum="{Binding TotalRecords}"
+                                     Value="{Binding ProcessedRecords}"
+                                     Height="16"
+                                     IsIndeterminate="False"
+                                     Foreground="#0078D4"/>
+                        <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0:F0}% completado'}"
+                                   FontSize="11" Foreground="#5E5E5E"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="SuccessTemplate">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="16,8,16,16">
+                        <Button Content="Abrir carpeta"
+                                Command="{Binding OpenFolderCommand}"
+                                Width="110" Height="30"
+                                Margin="0,0,8,0"
+                                ToolTip="Abrir el explorador de archivos en la carpeta del archivo exportado"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Cerrar"
+                                IsDefault="True"
+                                Click="BtnCerrar_Click"
+                                Width="88" Height="30"
+                                Style="{StaticResource PrimaryButtonStyle}"/>
+                    </StackPanel>
+                    <StackPanel Margin="24,24,24,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="&#xE73E;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="32"
+                                   Foreground="#107C10"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Exportacion completada"
+                                   FontSize="20"
+                                   FontWeight="Light"
+                                   Foreground="#1A1A1A"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,16,0,0"/>
+                        <TextBlock Text="{Binding ExportCountText}"
+                                   FontSize="13"
+                                   Foreground="#5E5E5E"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding OutputPath}"
+                                   FontSize="11"
+                                   Foreground="#5E5E5E"
+                                   HorizontalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="380"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="CancelledTemplate">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="16,8,16,16">
+                        <Button Content="Cerrar"
+                                IsDefault="True"
+                                Click="BtnCerrar_Click"
+                                Width="88" Height="30"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
+                    </StackPanel>
+                    <StackPanel Margin="24,24,24,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="&#xE711;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="28"
+                                   Foreground="#5E5E5E"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Exportacion cancelada"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A1A1A"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,0"/>
+                        <TextBlock Text="El archivo parcial fue eliminado."
+                                   FontSize="13"
+                                   Foreground="#5E5E5E"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </DataTemplate>
+        </ContentControl.Resources>
+
+        <ContentControl.Style>
+            <Style TargetType="ContentControl">
+                <Setter Property="ContentTemplate" Value="{StaticResource ProgressTemplate}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                        <Setter Property="ContentTemplate" Value="{StaticResource SuccessTemplate}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                        <Setter Property="ContentTemplate" Value="{StaticResource CancelledTemplate}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ContentControl.Style>
+    </ContentControl>
+</Window>
