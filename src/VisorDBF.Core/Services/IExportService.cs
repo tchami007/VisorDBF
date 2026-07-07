@@ -9,5 +9,6 @@ public interface IExportService
         ExportConfiguration config,
         string outputPath,
         IProgress<int> progress,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        ColumnFormatConfiguration? columnFormats = null);
 }

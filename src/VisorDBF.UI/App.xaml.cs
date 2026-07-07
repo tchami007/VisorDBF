@@ -17,8 +17,9 @@ public partial class App : Application
         var encodingDetector = new EncodingDetectionService();
         var dbfReader = new DbfReaderService();
         var exportService = new TxtExportService();
+        var columnFormatService = new ColumnFormatService();
 
-        var mainViewModel = new MainViewModel(dbfReader, encodingDetector, exportService);
+        var mainViewModel = new MainViewModel(dbfReader, encodingDetector, exportService, columnFormatService);
 
         var mainWindow = new MainWindow();
         mainWindow.DataContext = mainViewModel;

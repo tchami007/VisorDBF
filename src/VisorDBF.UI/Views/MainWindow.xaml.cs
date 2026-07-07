@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using VisorDBF.Core.Models;
+using VisorDBF.UI.Converters;
 using VisorDBF.UI.ViewModels;
 
 namespace VisorDBF.UI.Views;
@@ -26,12 +27,21 @@ public partial class MainWindow : Window
     private void SubscribeToViewModel()
     {
         if (DataContext is MainViewModel vm)
+        {
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            vm.ColumnFormatsChanged += OnColumnFormatsChanged;
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.Fields) && ViewModel is { } vm)
+            GenerateColumns(vm.Fields);
+    }
+
+    private void OnColumnFormatsChanged(object? sender, EventArgs e)
+    {
+        if (ViewModel is { } vm)
             GenerateColumns(vm.Fields);
     }
 
@@ -44,9 +54,12 @@ public partial class MainWindow : Window
     {
         MainDataGrid.Columns.Clear();
 
+        var vm = ViewModel;
+        bool applyFormats = vm?.AreFormatsActive == true;
+        var formats = vm?.CurrentColumnFormats.Formats;
+
         foreach (var field in fields)
         {
-            // Header: StackPanel con nombre en SemiBold y tipo en fuente pequeña
             var headerPanel = new StackPanel { Orientation = Orientation.Vertical };
 
             headerPanel.Children.Add(new TextBlock
@@ -66,15 +79,25 @@ public partial class MainWindow : Window
                 Foreground = new SolidColorBrush(Color.FromRgb(0x5E, 0x5E, 0x5E))
             });
 
-            // Binding al indexador del Dictionary con PropertyPath para soportar
-            // nombres de campo con espacios o caracteres especiales
+            var binding = new Binding
+            {
+                Path = new PropertyPath($"Values[{field.Name}]")
+            };
+
+            string? formatString = null;
+            if (applyFormats && formats != null)
+                formats.TryGetValue(field.Name, out formatString);
+
+            if (!string.IsNullOrEmpty(formatString))
+            {
+                binding.Converter = new ColumnFormatConverter();
+                binding.ConverterParameter = formatString;
+            }
+
             var col = new DataGridTextColumn
             {
                 Header = headerPanel,
-                Binding = new Binding
-                {
-                    Path = new PropertyPath($"Values[{field.Name}]")
-                },
+                Binding = binding,
                 MinWidth = 60,
                 MaxWidth = field.Type == DbfFieldType.Memo ? 120 : 300,
                 Width = DataGridLength.Auto

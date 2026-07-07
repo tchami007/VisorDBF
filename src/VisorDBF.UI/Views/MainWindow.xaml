@@ -30,6 +30,12 @@
                 <Separator/>
                 <MenuItem Header="Salir" Click="MenuItem_Salir_Click"/>
             </MenuItem>
+            <MenuItem Header="Ver">
+                <MenuItem Header="Aplicar formatos de columna"
+                          IsCheckable="True"
+                          IsChecked="{Binding AreFormatsActive}"
+                          Command="{Binding ToggleFormatsCommand}"/>
+            </MenuItem>
             <MenuItem Header="Exportar">
                 <MenuItem Header="Exportar a TXT..."
                           Command="{Binding ExportCommand}"
@@ -38,7 +44,8 @@
             <MenuItem Header="Configuración">
                 <MenuItem Header="Configuración de exportación..."
                           Command="{Binding OpenExportConfigCommand}"/>
-                <MenuItem Header="Formatos de columnas..." IsEnabled="False"/>
+                <MenuItem Header="Formatos de columnas..."
+                          Command="{Binding OpenColumnFormatsCommand}"/>
                 <MenuItem Header="Codificación de lectura..."
                           Command="{Binding ChangeEncodingCommand}"/>
             </MenuItem>

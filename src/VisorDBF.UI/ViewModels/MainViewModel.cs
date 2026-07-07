@@ -15,6 +15,7 @@ public class MainViewModel : ViewModelBase
     private readonly IDbfReaderService _dbfReaderService;
     private readonly IEncodingDetectionService _encodingDetectionService;
     private readonly IExportService _exportService;
+    private readonly IColumnFormatService _columnFormatService;
 
     private DbfFile? _currentFile;
     private IReadOnlyList<DbfRecord> _records = Array.Empty<DbfRecord>();
@@ -26,6 +27,8 @@ public class MainViewModel : ViewModelBase
     private bool _isExporting;
     private CancellationTokenSource? _exportCts;
     private double _exportProgressPercent;
+    private bool _areFormatsActive;
+    private ColumnFormatConfiguration _currentColumnFormats = ColumnFormatConfiguration.Default;
 
     public DbfFile? CurrentFile
     {
@@ -99,20 +102,46 @@ public class MainViewModel : ViewModelBase
     public string WindowTitle => CurrentFile != null ? $"{CurrentFile.FileName} — VisorDBF" : "VisorDBF";
     public bool CanExport => HasFile && !IsLoading && !IsExporting;
 
+    public event EventHandler? ColumnFormatsChanged;
+
+    public bool AreFormatsActive
+    {
+        get => _areFormatsActive;
+        set
+        {
+            if (SetField(ref _areFormatsActive, value))
+                ColumnFormatsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public ColumnFormatConfiguration CurrentColumnFormats
+    {
+        get => _currentColumnFormats;
+        set
+        {
+            if (SetField(ref _currentColumnFormats, value))
+                ColumnFormatsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     public ICommand OpenFileCommand { get; }
     public ICommand ChangeEncodingCommand { get; }
     public ICommand OpenExportConfigCommand { get; }
     public ICommand ExportCommand { get; }
     public ICommand CancelExportCommand { get; }
+    public ICommand OpenColumnFormatsCommand { get; }
+    public ICommand ToggleFormatsCommand { get; }
 
     public MainViewModel(
         IDbfReaderService dbfReaderService,
         IEncodingDetectionService encodingDetectionService,
-        IExportService exportService)
+        IExportService exportService,
+        IColumnFormatService columnFormatService)
     {
         _dbfReaderService = dbfReaderService ?? throw new ArgumentNullException(nameof(dbfReaderService));
         _encodingDetectionService = encodingDetectionService ?? throw new ArgumentNullException(nameof(encodingDetectionService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+        _columnFormatService = columnFormatService ?? throw new ArgumentNullException(nameof(columnFormatService));
 
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
         ChangeEncodingCommand = new RelayCommand(
@@ -123,6 +152,12 @@ public class MainViewModel : ViewModelBase
             _ => !IsLoading);
         ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => CanExport);
         CancelExportCommand = new RelayCommand(_ => CancelExport(), _ => IsExporting);
+        OpenColumnFormatsCommand = new RelayCommand(
+            async _ => await OpenColumnFormatsAsync(),
+            _ => HasFile && !IsLoading);
+        ToggleFormatsCommand = new RelayCommand(
+            _ => AreFormatsActive = !AreFormatsActive,
+            _ => HasFile);
     }
 
     private async Task OpenFileAsync()
@@ -175,6 +210,8 @@ public class MainViewModel : ViewModelBase
             Fields = dbfFile.Fields;
             Records = dbfFile.Records;
             ActiveEncoding = encodingToUse;
+            CurrentColumnFormats = ColumnFormatConfiguration.Default;
+            AreFormatsActive = false;
             StatusMessage = $"{dbfFile.RecordCount} registros";
             OnPropertyChanged(nameof(WindowTitle));
             OnPropertyChanged(nameof(HasFile));
@@ -239,6 +276,28 @@ public class MainViewModel : ViewModelBase
         await Task.CompletedTask;
     }
 
+    private async Task OpenColumnFormatsAsync()
+    {
+        if (CurrentFile == null) return;
+
+        var firstRecord = Records.Count > 0 ? Records[0] : null;
+        var configVm = new ColumnFormatsViewModel(
+            Fields,
+            firstRecord,
+            CurrentColumnFormats,
+            _columnFormatService,
+            result =>
+            {
+                CurrentColumnFormats = result;
+                AreFormatsActive = result.IsActive;
+            });
+
+        var dialog = new ColumnFormatsWindow { DataContext = configVm };
+        dialog.Owner = Application.Current.MainWindow;
+        dialog.ShowDialog();
+        await Task.CompletedTask;
+    }
+
     private async Task ExportAsync()
     {
         if (CurrentFile == null) return;
@@ -284,7 +343,8 @@ public class MainViewModel : ViewModelBase
                         CurrentExportConfig,
                         saveDialog.FileName,
                         progress,
-                        _exportCts.Token);
+                        _exportCts.Token,
+                        CurrentColumnFormats);
 
                     syncContext?.Post(_ => progressVm.IsComplete = true, null);
                 }

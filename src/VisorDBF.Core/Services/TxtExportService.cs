@@ -6,12 +6,20 @@ namespace VisorDBF.Core.Services;
 
 public class TxtExportService : IExportService
 {
+    private readonly IColumnFormatService? _formatService;
+
+    public TxtExportService(IColumnFormatService? formatService = null)
+    {
+        _formatService = formatService;
+    }
+
     public async Task ExportAsync(
         DbfFile file,
         ExportConfiguration config,
         string outputPath,
         IProgress<int> progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ColumnFormatConfiguration? columnFormats = null)
     {
         try
         {
@@ -41,7 +49,7 @@ public class TxtExportService : IExportService
                 if (config.RowLimitMode == RowLimitMode.FirstN && exported >= config.MaxRows)
                     break;
 
-                var line = BuildLine(record, file.Fields, config);
+                var line = BuildLine(record, file.Fields, config, columnFormats, _formatService);
                 await writer.WriteLineAsync(line.AsMemory(), cancellationToken);
 
                 exported++;
@@ -69,20 +77,51 @@ public class TxtExportService : IExportService
     internal static string BuildLine(
         DbfRecord record,
         IReadOnlyList<DbfField> fields,
-        ExportConfiguration config)
+        ExportConfiguration config,
+        ColumnFormatConfiguration? columnFormats = null,
+        IColumnFormatService? formatService = null)
     {
-        var values = fields.Select(f => FormatValue(record.Values.GetValueOrDefault(f.Name)));
+        var values = fields.Select(f => FormatValue(
+            record.Values.GetValueOrDefault(f.Name),
+            f.Name,
+            columnFormats,
+            formatService));
         var line = string.Join(config.ColumnSeparator, values);
         if (!string.IsNullOrEmpty(config.RowEndDelimiter))
             line += config.RowEndDelimiter;
         return line;
     }
 
-    internal static string FormatValue(object? value) => value switch
+    internal static string FormatValue(
+        object? value,
+        string? fieldName = null,
+        ColumnFormatConfiguration? columnFormats = null,
+        IColumnFormatService? formatService = null)
     {
-        null => string.Empty,
-        DateTime dt => dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-        IFormattable fmt => fmt.ToString(null, CultureInfo.CurrentCulture),
-        _ => value.ToString() ?? string.Empty
-    };
+        if (columnFormats?.IsActive == true && fieldName != null
+            && columnFormats.Formats.TryGetValue(fieldName, out var format)
+            && !string.IsNullOrEmpty(format)
+            && value is IFormattable formattable)
+        {
+            try
+            {
+                return formattable.ToString(format, CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                return value.ToString() ?? string.Empty;
+            }
+        }
+
+        return value switch
+        {
+            null => string.Empty,
+            DateTime dt => dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            IFormattable fmt => fmt.ToString(null, CultureInfo.CurrentCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+    }
+
+    internal static string FormatValue(object? value)
+        => FormatValue(value, null, null, null);
 }

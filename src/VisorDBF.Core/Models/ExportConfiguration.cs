@@ -9,6 +9,7 @@ public sealed record ExportConfiguration
     public RowLimitMode RowLimitMode { get; init; } = RowLimitMode.All;
     public int MaxRows { get; init; } = 0;
     public Encoding OutputEncoding { get; init; } = Encoding.UTF8;
+    public ColumnFormatConfiguration ColumnFormats { get; init; } = ColumnFormatConfiguration.Default;
 
     public static ExportConfiguration Default { get; } = new();
 }

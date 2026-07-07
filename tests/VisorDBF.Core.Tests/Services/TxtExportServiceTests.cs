@@ -255,4 +255,160 @@ public class TxtExportServiceTests
                 File.Delete(outputPath);
         }
     }
+
+    [Fact]
+    public void FormatValue_WithFormatString_AppliesFormat()
+    {
+        var formatService = new ColumnFormatService();
+        var dt = new DateTime(2024, 7, 15);
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?> { ["FECHA"] = "yyyy/MM/dd" },
+            IsActive = true
+        };
+
+        var result = TxtExportService.FormatValue(dt, "FECHA", columnFormats, formatService);
+        result.Should().Be("2024/07/15");
+    }
+
+    [Fact]
+    public void FormatValue_WithInactiveFormats_ReturnsOriginal()
+    {
+        var formatService = new ColumnFormatService();
+        var dt = new DateTime(2024, 7, 15);
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?> { ["FECHA"] = "yyyy/MM/dd" },
+            IsActive = false
+        };
+
+        var result = TxtExportService.FormatValue(dt, "FECHA", columnFormats, formatService);
+        result.Should().Be("2024-07-15");
+    }
+
+    [Fact]
+    public void FormatValue_NullColumnFormats_ReturnsOriginal()
+    {
+        var formatService = new ColumnFormatService();
+        var dt = new DateTime(2024, 7, 15);
+
+        var result = TxtExportService.FormatValue(dt, "FECHA", null, formatService);
+        result.Should().Be("2024-07-15");
+    }
+
+    [Fact]
+    public void BuildLine_WithColumnFormats_AppliesFormat()
+    {
+        var file = CreateSampleFile(1);
+        var record = file.Records[0];
+        var config = ExportConfiguration.Default;
+        var formatService = new ColumnFormatService();
+
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?>
+            {
+                ["EDAD"] = "D5",
+                ["FECHA"] = "yyyy/MM/dd"
+            },
+            IsActive = true
+        };
+
+        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        line.Should().Be("Persona 1;00025;2024/01/01");
+    }
+
+    [Fact]
+    public void BuildLine_WithInactiveColumnFormats_IgnoresFormats()
+    {
+        var file = CreateSampleFile(1);
+        var record = file.Records[0];
+        var config = ExportConfiguration.Default;
+        var formatService = new ColumnFormatService();
+
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?> { ["FECHA"] = "yyyy/MM/dd" },
+            IsActive = false
+        };
+
+        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        line.Should().Be("Persona 1;25;2024-01-01");
+    }
+
+    [Fact]
+    public void BuildLine_NullColumnFormats_OriginalBehavior()
+    {
+        var file = CreateSampleFile(1);
+        var record = file.Records[0];
+        var config = ExportConfiguration.Default;
+
+        var line = TxtExportService.BuildLine(record, file.Fields, config, null, null);
+        line.Should().Be("Persona 1;25;2024-01-01");
+    }
+
+    [Fact]
+    public void BuildLine_NonFormattableValue_SkipsFormat()
+    {
+        var file = CreateSampleFile(1);
+        var record = file.Records[0];
+        var nonFormattableValue = new NonFormattableDummy();
+        record.Values["NOMBRE"] = nonFormattableValue;
+        var config = ExportConfiguration.Default;
+        var formatService = new ColumnFormatService();
+
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?> { ["NOMBRE"] = "D5" },
+            IsActive = true
+        };
+
+        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        line.Should().Be("dummy;25;2024-01-01");
+    }
+
+    private sealed class NonFormattableDummy
+    {
+        public override string ToString() => "dummy";
+    }
+
+    [Fact]
+    public async Task ExportAsync_WithColumnFormats_WritesFormattedValues()
+    {
+        var file = CreateSampleFile(2);
+        var outputPath = Path.Combine(Path.GetTempPath(), $"test_export_fmt_{Guid.NewGuid()}.txt");
+        var formatService = new ColumnFormatService();
+
+        var columnFormats = new ColumnFormatConfiguration
+        {
+            Formats = new Dictionary<string, string?>
+            {
+                ["EDAD"] = "D5",
+                ["FECHA"] = "yyyy/MM/dd"
+            },
+            IsActive = true
+        };
+
+        try
+        {
+            var service = new TxtExportService(formatService);
+            await service.ExportAsync(
+                file,
+                ExportConfiguration.Default,
+                outputPath,
+                new Progress<int>(),
+                CancellationToken.None,
+                columnFormats);
+
+            var lines = await File.ReadAllLinesAsync(outputPath);
+            lines[0].Should().Be("NOMBRE;EDAD;FECHA");
+            lines[1].Should().Be("Persona 1;00025;2024/01/01");
+            lines[2].Should().Be("Persona 2;00026;2024/01/02");
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
+        }
+    }
 }
