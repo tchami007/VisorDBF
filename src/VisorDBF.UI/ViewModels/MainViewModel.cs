@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ public class MainViewModel : ViewModelBase
 {
     private readonly IDbfReaderService _dbfReaderService;
     private readonly IEncodingDetectionService _encodingDetectionService;
+    private readonly IExportService _exportService;
 
     private DbfFile? _currentFile;
     private IReadOnlyList<DbfRecord> _records = Array.Empty<DbfRecord>();
@@ -21,6 +23,9 @@ public class MainViewModel : ViewModelBase
     private string _statusMessage = "Sin archivo";
     private Encoding _activeEncoding = Encoding.GetEncoding("windows-1252");
     private ExportConfiguration _currentExportConfig = ExportConfiguration.Default;
+    private bool _isExporting;
+    private CancellationTokenSource? _exportCts;
+    private double _exportProgressPercent;
 
     public DbfFile? CurrentFile
     {
@@ -71,17 +76,43 @@ public class MainViewModel : ViewModelBase
         set => SetField(ref _currentExportConfig, value);
     }
 
+    public bool IsExporting
+    {
+        get => _isExporting;
+        private set
+        {
+            if (SetField(ref _isExporting, value))
+            {
+                OnPropertyChanged(nameof(CanExport));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    public double ExportProgressPercent
+    {
+        get => _exportProgressPercent;
+        private set => SetField(ref _exportProgressPercent, value);
+    }
+
     public bool HasFile => CurrentFile != null;
     public string WindowTitle => CurrentFile != null ? $"{CurrentFile.FileName} — VisorDBF" : "VisorDBF";
+    public bool CanExport => HasFile && !IsLoading && !IsExporting;
 
     public ICommand OpenFileCommand { get; }
     public ICommand ChangeEncodingCommand { get; }
     public ICommand OpenExportConfigCommand { get; }
+    public ICommand ExportCommand { get; }
+    public ICommand CancelExportCommand { get; }
 
-    public MainViewModel(IDbfReaderService dbfReaderService, IEncodingDetectionService encodingDetectionService)
+    public MainViewModel(
+        IDbfReaderService dbfReaderService,
+        IEncodingDetectionService encodingDetectionService,
+        IExportService exportService)
     {
         _dbfReaderService = dbfReaderService ?? throw new ArgumentNullException(nameof(dbfReaderService));
         _encodingDetectionService = encodingDetectionService ?? throw new ArgumentNullException(nameof(encodingDetectionService));
+        _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
 
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
         ChangeEncodingCommand = new RelayCommand(
@@ -90,6 +121,8 @@ public class MainViewModel : ViewModelBase
         OpenExportConfigCommand = new RelayCommand(
             async _ => await OpenExportConfigAsync(),
             _ => !IsLoading);
+        ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => CanExport);
+        CancelExportCommand = new RelayCommand(_ => CancelExport(), _ => IsExporting);
     }
 
     private async Task OpenFileAsync()
@@ -204,5 +237,84 @@ public class MainViewModel : ViewModelBase
         {
         }
         await Task.CompletedTask;
+    }
+
+    private async Task ExportAsync()
+    {
+        if (CurrentFile == null) return;
+
+        var saveDialog = new SaveFileDialog
+        {
+            Title = "Guardar archivo de exportacion",
+            Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
+            DefaultExt = ".txt",
+            InitialDirectory = Path.GetDirectoryName(CurrentFile.FilePath),
+            FileName = Path.GetFileNameWithoutExtension(CurrentFile.FilePath) + ".txt"
+        };
+
+        if (saveDialog.ShowDialog() != true) return;
+
+        _exportCts = new CancellationTokenSource();
+        var progressVm = new ExportProgressDialogViewModel(
+            CurrentFile.RecordCount, saveDialog.FileName, () => _exportCts?.Cancel());
+        var progressDialog = new ExportProgressDialog { DataContext = progressVm };
+        progressDialog.Owner = Application.Current.MainWindow;
+
+        var syncContext = SynchronizationContext.Current;
+
+        try
+        {
+            IsExporting = true;
+            ExportProgressPercent = 0;
+
+            var exportTask = Task.Run(async () =>
+            {
+                await _exportService.ExportAsync(
+                    CurrentFile,
+                    CurrentExportConfig,
+                    saveDialog.FileName,
+                    new Progress<int>(processed =>
+                    {
+                        progressVm.ProcessedRecords = processed;
+                        ExportProgressPercent = (double)processed / CurrentFile.RecordCount * 100;
+                    }),
+                    _exportCts.Token);
+
+                syncContext?.Post(_ => progressVm.IsComplete = true, null);
+            });
+
+            progressDialog.ShowDialog();
+
+            await exportTask;
+        }
+        catch (OperationCanceledException)
+        {
+            syncContext?.Post(_ => progressVm.IsCancelled = true, null);
+        }
+        catch (ExportException ex)
+        {
+            MessageBox.Show(ex.Message, "Error de exportacion",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Se produjo un error durante la exportacion. El archivo parcial fue eliminado.\n\n{ex.Message}",
+                "Error de exportacion", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        finally
+        {
+            IsExporting = false;
+            _exportCts?.Dispose();
+            _exportCts = null;
+        }
+    }
+
+    private void CancelExport()
+    {
+        _exportCts?.Cancel();
     }
 }

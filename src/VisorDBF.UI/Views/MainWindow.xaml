@@ -13,6 +13,7 @@
 
     <Window.InputBindings>
         <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Key="E" Modifiers="Ctrl" Command="{Binding ExportCommand}"/>
     </Window.InputBindings>
 
     <DockPanel>
@@ -30,14 +31,16 @@
                 <MenuItem Header="Salir" Click="MenuItem_Salir_Click"/>
             </MenuItem>
             <MenuItem Header="Exportar">
-                <MenuItem Header="Exportar a TXT..." IsEnabled="False"/>
+                <MenuItem Header="Exportar a TXT..."
+                          Command="{Binding ExportCommand}"
+                          InputGestureText="Ctrl+E"/>
             </MenuItem>
             <MenuItem Header="Configuración">
-                <MenuItem Header="Configuración de exportación..." IsEnabled="False"/>
+                <MenuItem Header="Configuración de exportación..."
+                          Command="{Binding OpenExportConfigCommand}"/>
                 <MenuItem Header="Formatos de columnas..." IsEnabled="False"/>
                 <MenuItem Header="Codificación de lectura..."
-                          Command="{Binding ChangeEncodingCommand}"
-                          IsEnabled="False"/>
+                          Command="{Binding ChangeEncodingCommand}"/>
             </MenuItem>
             <MenuItem Header="Ayuda">
                 <MenuItem Header="Acerca de..." IsEnabled="False"/>
@@ -58,18 +61,20 @@
                                VerticalAlignment="Center"/>
                 </Button>
                 <Separator/>
-                <!-- Exportar — deshabilitado hasta Phase 2 -->
-                <Button IsEnabled="False"
-                        ToolTip="Exportar a TXT..."
+                <!-- Exportar -->
+                <Button Command="{Binding ExportCommand}"
+                        ToolTip="Exportar a TXT... (Ctrl+E)"
+                        AutomationProperties.Name="Exportar a TXT"
                         Padding="8,4">
                     <TextBlock Text="&#xE78C;"
                                FontFamily="Segoe MDL2 Assets"
                                FontSize="16"
                                VerticalAlignment="Center"/>
                 </Button>
-                <!-- Configuracion — deshabilitado hasta Phase 2 -->
-                <Button IsEnabled="False"
-                        ToolTip="Configuración de exportación"
+                <!-- Configuracion -->
+                <Button Command="{Binding OpenExportConfigCommand}"
+                        ToolTip="Configuracion de exportacion"
+                        AutomationProperties.Name="Configuracion de exportacion"
                         Padding="8,4">
                     <TextBlock Text="&#xE713;"
                                FontFamily="Segoe MDL2 Assets"
@@ -140,6 +145,42 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Button>
+            </StatusBarItem>
+            <!-- Separador de progreso de exportacion (visible solo durante exportacion) -->
+            <Separator>
+                <Separator.Style>
+                    <Style TargetType="Separator">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsExporting}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Separator.Style>
+            </Separator>
+            <!-- Mini ProgressBar de exportacion (visible solo durante exportacion) -->
+            <StatusBarItem Width="160">
+                <StatusBarItem.Style>
+                    <Style TargetType="StatusBarItem">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsExporting}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StatusBarItem.Style>
+                <DockPanel>
+                    <TextBlock Text="{Binding ExportProgressPercent, StringFormat='{}{0:F0}%'}"
+                               FontSize="11" VerticalAlignment="Center"
+                               Foreground="#5E5E5E"
+                               DockPanel.Dock="Right" Margin="4,0,0,0"/>
+                    <ProgressBar Minimum="0" Maximum="100"
+                                 Value="{Binding ExportProgressPercent}"
+                                 Height="10" VerticalAlignment="Center"
+                                 Foreground="#0078D4"/>
+                </DockPanel>
             </StatusBarItem>
         </StatusBar>
 
