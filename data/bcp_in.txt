@@ -1,0 +1,1 @@
+bcp tempdb..InsActiva_Raw in "C:\OPENCODE\VisorDBF\data\prueba.txt" -c -t "*~*" -r "\n" -S BMRDESAASE -U bcp -P bcpbcp

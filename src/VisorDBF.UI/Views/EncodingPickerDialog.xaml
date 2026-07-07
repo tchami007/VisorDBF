@@ -1,0 +1,215 @@
+<Window x:Class="VisorDBF.UI.Views.EncodingPickerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Seleccionar codificacion de lectura"
+        Width="480" Height="400"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#FFFFFF"
+        FontFamily="Segoe UI"
+        KeyboardNavigation.TabNavigation="Cycle">
+
+    <DockPanel>
+
+        <!-- ===================== CABECERA DE ADVERTENCIA ===================== -->
+        <!-- Visible solo cuando WarningMessage != null (Language Driver ID desconocido) -->
+        <DockPanel DockPanel.Dock="Top" Margin="16,16,16,0">
+            <DockPanel.Style>
+                <Style TargetType="DockPanel">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasWarning}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DockPanel.Style>
+
+            <!-- Icono advertencia \uE7BA -->
+            <TextBlock DockPanel.Dock="Left"
+                       Text="&#xE7BA;"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="16"
+                       Foreground="#C42B1C"
+                       VerticalAlignment="Top"
+                       Margin="0,1,8,0"/>
+
+            <!-- Mensaje de advertencia -->
+            <TextBlock Text="{Binding WarningMessage}"
+                       FontSize="13"
+                       Foreground="#1A1A1A"
+                       TextWrapping="Wrap"/>
+        </DockPanel>
+
+        <!-- ===================== BOTONES ===================== -->
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="16,8,16,16">
+
+            <!-- Aceptar — boton primario con accent color -->
+            <Button x:Name="BtnAceptar"
+                    Content="Aceptar"
+                    IsDefault="True"
+                    Click="BtnAceptar_Click"
+                    Width="88" Height="30"
+                    Margin="0,0,8,0"
+                    TabIndex="0"
+                    ToolTip="Confirmar seleccion de codificacion">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#0078D4"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="2"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Cancelar — boton secundario -->
+            <Button x:Name="BtnCancelar"
+                    Content="Cancelar"
+                    IsCancel="True"
+                    Click="BtnCancelar_Click"
+                    Width="88" Height="30"
+                    TabIndex="1"
+                    ToolTip="Cancelar y cerrar sin cambios">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="#E8E8E8"/>
+                        <Setter Property="Foreground" Value="#1A1A1A"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="2"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#D1D1D1"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+
+        <!-- ===================== CONTENIDO CENTRAL ===================== -->
+        <StackPanel Margin="16,8,16,0">
+
+            <!-- ComboBox de seleccion de encoding -->
+            <ComboBox ItemsSource="{Binding AvailableEncodings}"
+                      SelectedValue="{Binding SelectedEncoding}"
+                      SelectedValuePath="Encoding"
+                      DisplayMemberPath="DisplayName"
+                      Height="28"
+                      FontSize="13"
+                      Margin="0,0,0,8"
+                      TabIndex="2"/>
+
+            <!-- Caption de la vista previa -->
+            <TextBlock Text="Vista previa (5 registros):"
+                       FontSize="11"
+                       Foreground="#5E5E5E"
+                       Margin="0,0,0,4"/>
+
+            <!-- DataGrid de vista previa: primeros 5 registros con el encoding activo -->
+            <DataGrid x:Name="PreviewDataGrid"
+                      ItemsSource="{Binding PreviewRecords}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      IsReadOnly="True"
+                      Height="150"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#D1D1D1"
+                      Background="#FFFFFF"
+                      AlternatingRowBackground="#FAFAFA"
+                      ColumnHeaderHeight="36"
+                      FontSize="12"
+                      TabIndex="3">
+
+                <!-- Estilo de header de columna -->
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#E8E8E8"/>
+                        <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        <Setter Property="Padding" Value="4,3,4,3"/>
+                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <!-- Estilo de celda -->
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="4,2"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                    </Style>
+                </DataGrid.CellStyle>
+
+            </DataGrid>
+
+            <!-- Indicador de carga de preview -->
+            <TextBlock Text="Cargando vista previa..."
+                       FontSize="11"
+                       Foreground="#5E5E5E"
+                       HorizontalAlignment="Center"
+                       Margin="0,4,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLoadingPreview}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+        </StackPanel>
+
+    </DockPanel>
+</Window>

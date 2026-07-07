@@ -53,10 +53,14 @@ OPEN-01, OPEN-02, OPEN-03, OPEN-04, ENC-01, VIEW-01, VIEW-02, VIEW-03, VIEW-04, 
 EXPO-01, EXPO-02, EXPO-03, EXPO-04, EXPO-05, SEP-01, SEP-02, ROWS-01, ROWS-02, ENC-02
 
 **Plans:**
-
+**Wave 1** *(parallel — ExportConfiguration model + TxtExportService service)*
 - [ ] 2.1 — Modelo ExportConfiguration y pantalla de configuracion de exportacion (UI + ViewModel)
 - [ ] 2.2 — Servicio de exportacion TXT (IExportService, TxtExportService con StreamWriter, IProgress<int>, CancellationToken)
+
+**Wave 2** *(blocked on Wave 1 — progress dialog depends on TxtExportService)*
 - [ ] 2.3 — Dialogo de progreso de exportacion (ExportProgressDialog, barra determinista, boton cancelar)
+
+**Wave 3** *(blocked on Waves 1-2 — integration requires all components)*
 - [ ] 2.4 — Integracion: flujo completo apertura → configuracion → exportacion → confirmacion
 
 ---
@@ -137,4 +141,4 @@ Fases secuenciales. Dentro de cada fase, los planes pueden ejecutarse en paralel
 
 ---
 *Roadmap created: 2026-07-06*
-*Last updated: 2026-07-06 after Phase 1 completion (all 5 plans complete)*
+*Last updated: 2026-07-07 after Phase 2 planning (4 plans in 3 waves, verified)*
