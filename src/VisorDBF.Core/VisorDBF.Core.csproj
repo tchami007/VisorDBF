@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>VisorDBF.Core.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DbfDataReader" Version="0.4.*" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.*" />
   </ItemGroup>
