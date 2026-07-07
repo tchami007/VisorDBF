@@ -73,11 +73,11 @@
                         <DockPanel Margin="0,4,0,0">
                             <RadioButton Content="Personalizado" GroupName="ColSep"
                                          IsChecked="{Binding UseCustomSeparator}" DockPanel.Dock="Left"/>
-                            <TextBox Text="{Binding CustomSeparatorChar}"
+                            <TextBox Text="{Binding CustomSeparator}"
                                      IsEnabled="{Binding UseCustomSeparator}"
-                                     MaxLength="1" Width="40" Height="24"
+                                     MaxLength="16" Width="120" Height="24"
                                      Margin="8,0,0,0"
-                                     ToolTip="Ingrese exactamente un caracter"/>
+                                     ToolTip="Uno o mas caracteres como separador personalizado"/>
                         </DockPanel>
                         <Separator Margin="0,10,0,8"/>
                         <TextBlock Text="Delimitador final de fila:" FontSize="11" Foreground="#5E5E5E" Margin="0,0,0,4"/>

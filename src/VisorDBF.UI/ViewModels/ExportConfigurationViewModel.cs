@@ -11,7 +11,7 @@ public class ExportConfigurationViewModel : ViewModelBase
 
     private string _columnSeparator = ";";
     private bool _useCustomSeparator;
-    private string _customSeparatorChar = string.Empty;
+    private string _customSeparator = string.Empty;
     private bool _includeHeader = true;
     private bool _exportAllRows = true;
     private int _maxRows = 1000;
@@ -38,12 +38,12 @@ public class ExportConfigurationViewModel : ViewModelBase
         }
     }
 
-    public string CustomSeparatorChar
+    public string CustomSeparator
     {
-        get => _customSeparatorChar;
+        get => _customSeparator;
         set
         {
-            if (SetField(ref _customSeparatorChar, value))
+            if (SetField(ref _customSeparator, value))
                 OnPropertyChanged(nameof(SeparatorPreview));
         }
     }
@@ -86,7 +86,7 @@ public class ExportConfigurationViewModel : ViewModelBase
     {
         get
         {
-            var sep = _useCustomSeparator ? _customSeparatorChar : _columnSeparator;
+            var sep = _useCustomSeparator ? _customSeparator : _columnSeparator;
             var preview = $"CAMPO1{sep}CAMPO2{sep}CAMPO3";
             if (!string.IsNullOrEmpty(_rowEndDelimiter))
                 preview += _rowEndDelimiter;
@@ -113,7 +113,7 @@ public class ExportConfigurationViewModel : ViewModelBase
         _outputEncoding = current.OutputEncoding;
         _useCustomSeparator = !IsBuiltInSeparator(current.ColumnSeparator);
         if (_useCustomSeparator)
-            _customSeparatorChar = current.ColumnSeparator;
+            _customSeparator = current.ColumnSeparator;
         AvailableOutputEncodings = BuildEncodingList();
         ApplyCommand = new RelayCommand(_ => Apply());
     }
@@ -129,7 +129,7 @@ public class ExportConfigurationViewModel : ViewModelBase
 
     public ExportConfiguration BuildResult()
     {
-        var sep = _useCustomSeparator ? _customSeparatorChar : _columnSeparator;
+        var sep = _useCustomSeparator ? _customSeparator : _columnSeparator;
         return new ExportConfiguration
         {
             ColumnSeparator = sep,

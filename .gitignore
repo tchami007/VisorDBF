@@ -12,3 +12,6 @@ publish/
 # NuGet
 *.nupkg
 packages/
+
+# Export output
+data/*.txt
