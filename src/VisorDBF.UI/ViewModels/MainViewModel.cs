@@ -261,6 +261,14 @@ public class MainViewModel : ViewModelBase
         progressDialog.Owner = Application.Current.MainWindow;
 
         var syncContext = SynchronizationContext.Current;
+        var totalRecords = CurrentFile.RecordCount;
+
+        // Crear Progress<int> en el UI thread para que capture el SynchronizationContext de la UI
+        var progress = new Progress<int>(processed =>
+        {
+            progressVm.ProcessedRecords = processed;
+            ExportProgressPercent = (double)processed / totalRecords * 100;
+        });
 
         try
         {
@@ -269,18 +277,22 @@ public class MainViewModel : ViewModelBase
 
             var exportTask = Task.Run(async () =>
             {
-                await _exportService.ExportAsync(
-                    CurrentFile,
-                    CurrentExportConfig,
-                    saveDialog.FileName,
-                    new Progress<int>(processed =>
-                    {
-                        progressVm.ProcessedRecords = processed;
-                        ExportProgressPercent = (double)processed / CurrentFile.RecordCount * 100;
-                    }),
-                    _exportCts.Token);
+                try
+                {
+                    await _exportService.ExportAsync(
+                        CurrentFile,
+                        CurrentExportConfig,
+                        saveDialog.FileName,
+                        progress,
+                        _exportCts.Token);
 
-                syncContext?.Post(_ => progressVm.IsComplete = true, null);
+                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
+                }
+                catch (OperationCanceledException)
+                {
+                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
+                    throw;
+                }
             });
 
             progressDialog.ShowDialog();
@@ -289,7 +301,7 @@ public class MainViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            syncContext?.Post(_ => progressVm.IsCancelled = true, null);
+            // Ya se manejó dentro del Task.Run (IsCancelled = true en el diálogo)
         }
         catch (ExportException ex)
         {

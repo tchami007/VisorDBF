@@ -113,6 +113,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 | Task ID | Slug | Date | Description | Status |
 |---------|------|------|-------------|--------|
 | 260707-gpd | separador-multicaracter | 2026-07-07 | Permitir separador personalizado multi-caracter (MaxLength=1 eliminado, propiedad renombrada) | complete |
+| 260707-fpb | fix-progress-bar | 2026-07-07 | Fix Progress<T> creado en thread pool sin SC + cancelación dejaba diálogo trabado | complete |
 | 260706-od9 | ventana-en-blanco | 2026-07-06 | Fix blank window — add DataGrid Visibility binding on HasFile | complete |
 
 ---
