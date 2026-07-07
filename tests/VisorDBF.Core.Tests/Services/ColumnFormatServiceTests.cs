@@ -59,7 +59,7 @@ public class ColumnFormatServiceTests
     {
         var result = _sut.ApplyFormat("MONTO", 1234.5m, "N2");
 
-        result.Should().Be("1,234.50");
+        result.Should().Be(1234.5m.ToString("N2", CultureInfo.CurrentCulture));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class ColumnFormatServiceTests
     {
         var result = _sut.ApplyFormat("MONTO", 1234.5, "F3");
 
-        result.Should().Be("1234.500");
+        result.Should().Be(1234.5.ToString("F3", CultureInfo.CurrentCulture));
     }
 
     [Fact]

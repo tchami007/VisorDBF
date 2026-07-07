@@ -16,7 +16,7 @@ public sealed class ColumnFormatService : IColumnFormatService
         {
             try
             {
-                return formattable.ToString(formatString, CultureInfo.InvariantCulture);
+                return formattable.ToString(formatString, CultureInfo.CurrentCulture);
             }
             catch (FormatException)
             {
@@ -45,7 +45,7 @@ public sealed class ColumnFormatService : IColumnFormatService
         {
             try
             {
-                formattable.ToString(formatString, CultureInfo.InvariantCulture);
+                formattable.ToString(formatString, CultureInfo.CurrentCulture);
                 return true;
             }
             catch (FormatException)
