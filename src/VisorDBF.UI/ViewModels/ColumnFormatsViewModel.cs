@@ -51,6 +51,7 @@ public sealed class ColumnFormatsViewModel : ViewModelBase
     public bool HasInvalidFormat => Columns.Any(c => c.IsFormattable && !c.IsValidFormat && c.IsEnabled);
 
     public ICommand ApplyPresetCommand { get; }
+    public ICommand ClearAllCommand { get; }
 
     public ColumnFormatsViewModel(
         IReadOnlyList<DbfField> fields,
@@ -83,6 +84,7 @@ public sealed class ColumnFormatsViewModel : ViewModelBase
         }
 
         ApplyPresetCommand = new RelayCommand(ApplyPreset);
+        ClearAllCommand = new RelayCommand(_ => ClearAll());
 
         if (Columns.Count > 0)
             SelectedColumn = Columns[0];
@@ -125,6 +127,16 @@ public sealed class ColumnFormatsViewModel : ViewModelBase
         if (parameter is not string format || SelectedColumn?.IsFormattable != true) return;
         SelectedColumn.FormatString = format;
         SelectedColumn.IsEnabled = true;
+    }
+
+    private void ClearAll()
+    {
+        foreach (var item in Columns)
+        {
+            if (!item.IsFormattable) continue;
+            item.FormatString = null;
+            item.IsEnabled = false;
+        }
     }
 
     public ColumnFormatConfiguration BuildResult()

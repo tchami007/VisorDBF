@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using VisorDBF.Core.Models;
 using VisorDBF.UI.Converters;
 using VisorDBF.UI.ViewModels;
@@ -60,9 +61,15 @@ public partial class MainWindow : Window
 
         foreach (var field in fields)
         {
+            string? formatString = null;
+            bool hasFormat = applyFormats && formats != null
+                && formats.TryGetValue(field.Name, out formatString)
+                && !string.IsNullOrEmpty(formatString);
+
             var headerPanel = new StackPanel { Orientation = Orientation.Vertical };
 
-            headerPanel.Children.Add(new TextBlock
+            var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
+            nameRow.Children.Add(new TextBlock
             {
                 Text = field.Name,
                 FontSize = 13,
@@ -70,6 +77,21 @@ public partial class MainWindow : Window
                 Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1A)),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
+
+            if (hasFormat)
+            {
+                nameRow.Children.Add(new Ellipse
+                {
+                    Width = 8,
+                    Height = 8,
+                    Fill = new SolidColorBrush(Color.FromRgb(0x00, 0x90, 0x50)),
+                    Margin = new Thickness(4, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    ToolTip = $"Formato: {formatString}"
+                });
+            }
+
+            headerPanel.Children.Add(nameRow);
 
             headerPanel.Children.Add(new TextBlock
             {
@@ -84,11 +106,7 @@ public partial class MainWindow : Window
                 Path = new PropertyPath($"Values[{field.Name}]")
             };
 
-            string? formatString = null;
-            if (applyFormats && formats != null)
-                formats.TryGetValue(field.Name, out formatString);
-
-            if (!string.IsNullOrEmpty(formatString))
+            if (hasFormat)
             {
                 binding.Converter = new ColumnFormatConverter();
                 binding.ConverterParameter = formatString;

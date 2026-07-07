@@ -165,24 +165,33 @@
         </Grid>
 
         <!-- Bottom buttons -->
-        <StackPanel DockPanel.Dock="Bottom"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Margin="16,8,16,16">
-            <Button x:Name="BtnAceptar"
-                    Content="Aceptar"
-                    IsDefault="True"
-                    Click="BtnAceptar_Click"
-                    Width="88" Height="30"
-                    Margin="0,0,8,0"
-                    IsEnabled="{Binding HasInvalidFormat, Converter={StaticResource InvertBoolConverter}}"
-                    Style="{StaticResource PrimaryButtonStyle}"/>
-            <Button x:Name="BtnCancelar"
-                    Content="Cancelar"
-                    IsCancel="True"
-                    Click="BtnCancelar_Click"
-                    Width="88" Height="30"
+        <Grid DockPanel.Dock="Bottom" Margin="16,8,16,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" x:Name="BtnClearAll"
+                    Content="Limpiar todo"
+                    Command="{Binding ClearAllCommand}"
+                    Width="100" Height="30"
                     Style="{StaticResource SecondaryButtonStyle}"/>
-        </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button x:Name="BtnAceptar"
+                        Content="Aceptar"
+                        IsDefault="True"
+                        Click="BtnAceptar_Click"
+                        Width="88" Height="30"
+                        Margin="0,0,8,0"
+                        IsEnabled="{Binding HasInvalidFormat, Converter={StaticResource InvertBoolConverter}}"
+                        Style="{StaticResource PrimaryButtonStyle}"/>
+                <Button x:Name="BtnCancelar"
+                        Content="Cancelar"
+                        IsCancel="True"
+                        Click="BtnCancelar_Click"
+                        Width="88" Height="30"
+                        Style="{StaticResource SecondaryButtonStyle}"/>
+            </StackPanel>
+        </Grid>
     </DockPanel>
 </Window>

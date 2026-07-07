@@ -111,6 +111,7 @@ public class TxtExportServiceTests
                 lines[1].Should().Be("Persona 1;25;2024-01-01");
                 lines[2].Should().Be("Persona 2;26;2024-01-02");
 
+            await Task.Delay(100);
             progressReports.Should().Contain(2);
         }
         finally
