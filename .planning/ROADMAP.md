@@ -86,7 +86,8 @@ FMT-01, FMT-02, FMT-03, FMT-04, FMT-05
 
 **Plans:**
 
-- [ ] 3.1 — Modelo ColumnFormatConfiguration y servicio de formateo (ColumnFormatService con validacion)
+0/3 plans complete
+
 - [ ] 3.2 — Pantalla de formatos de columna (ColumnFormatsWindow con DataGrid editable, columna Previa, panel de ayuda)
 - [ ] 3.3 — Integracion de formatos en TxtExportService y en la grilla principal
 

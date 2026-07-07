@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "### Phase 1: Cimientos — Solucion, Lectura DBF y Grilla"
-current_phase: 3 — Formatos por Columna
+current_phase: 4 — Perfiles, Persistencia y Polish
 status: Ready to plan
 stopped_at: Phase 3 context gathered — 15 decisions, 3 areas discussed
-last_updated: "2026-07-07T18:36:20.542Z"
+last_updated: "2026-07-07T18:45:52.109Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 9
+  total_plans: 12
   completed_plans: 9
   percent: 50
 ---
@@ -18,7 +18,7 @@ progress:
 
 **Last updated:** 2026-07-06
 **Current milestone:** v1.0 — Visor y Exportador DBF
-**Current phase:** 3 — Formatos por Columna
+**Current phase:** 4 — Perfiles, Persistencia y Polish
 
 ---
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 |-------|------|--------|-------|
 | 1 | Cimientos — Solucion, Lectura DBF y Grilla | **Complete** (5/5) | 5 plans |
 | 2 | Exportacion — Configuracion y Escritura TXT | **Complete** (4/4) | 4 plans |
-| 3 | Formatos por Columna | Not started | 3 plans |
+| 3 | Formatos por Columna | **Planned** (0/3 executed) | 3 plans |
 | 4 | Perfiles, Persistencia y Polish | Not started | 5 plans |
 
-**Total plans:** 17 | **Completed:** 5 | **Planned:** 4 | **Remaining:** 8
+**Total plans:** 17 | **Completed:** 9 | **Planned:** 3 | **Remaining:** 5
 
 ---
 
@@ -105,6 +105,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 | 2026-07-07 | Wave 2 (Plan 2.2) — TxtExportService: 3 tasks, 13/13 tests |
 | 2026-07-07 | Wave 3 (Plan 2.3) — ExportProgressDialog: 3 tasks, build clean |
 | 2026-07-07 | Wave 4 (Plan 2.4) — Integration: 4 tasks, 51/51 tests, build clean. Phase 2 COMPLETE. |
+| 2026-07-07 | Phase 3 context gathered — 15 decisions, 3 areas discussed |
+| 2026-07-07 | Phase 3 plans created — 3 plans (3 waves), verified and corrected |
 
 ---
 
@@ -120,16 +122,16 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 ## Next Action
 
 ```
-Phase 2 COMPLETE — 4/4 plans done, 51/51 tests pass, build clean.
-Next: Phase 3 — Formatos por Columna (Discuss -> Plan -> Execute)
+Phase 3 PLANNED — 3 plans (3 waves) ready for execution.
+Next: Execute Phase 3 — Formatos por Columna
 ```
 
 ---
 
-*State updated: 2026-07-07 after Phase 2 completion*
+*State updated: 2026-07-07 after Phase 3 planning*
 
 ## Session
 
 **Last session:** 2026-07-07T18:36:20.529Z
-**Stopped at:** Phase 3 context gathered — 15 decisions, 3 areas discussed
-**Resume file:** .planning/phases/03-formatos-por-columna/03-CONTEXT.md
+**Stopped at:** Phase 3 planned — 3 plans, 3 waves, plan-checker verified
+**Next:** Execute Phase 3 — Wave 1: Plan 3.1 (ColumnFormatConfiguration + Service) and Plan 3.2 (UI Dialog) in parallel
