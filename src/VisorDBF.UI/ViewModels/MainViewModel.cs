@@ -15,6 +15,8 @@ public class MainViewModel : ViewModelBase
     private readonly IDbfReaderService _dbfReaderService;
     private readonly IEncodingDetectionService _encodingDetectionService;
     private readonly IExportService _exportService;
+    private readonly IExportService _sqlExportService;
+    private readonly ISybaseExportService _sybaseExportService;
     private readonly IColumnFormatService _columnFormatService;
 
     private DbfFile? _currentFile;
@@ -29,6 +31,7 @@ public class MainViewModel : ViewModelBase
     private double _exportProgressPercent;
     private bool _areFormatsActive;
     private ColumnFormatConfiguration _currentColumnFormats = ColumnFormatConfiguration.Default;
+    private SybaseConnectionConfig? _sybaseConfig;
 
     public DbfFile? CurrentFile
     {
@@ -104,6 +107,18 @@ public class MainViewModel : ViewModelBase
 
     public event EventHandler? ColumnFormatsChanged;
 
+    public SybaseConnectionConfig? SybaseConfig
+    {
+        get => _sybaseConfig;
+        set
+        {
+            if (SetField(ref _sybaseConfig, value))
+                OnPropertyChanged(nameof(CanTransferToSybase));
+        }
+    }
+
+    public bool CanTransferToSybase => SybaseConfig?.IsValid == true && HasFile && !IsExporting;
+
     public bool AreFormatsActive
     {
         get => _areFormatsActive;
@@ -128,19 +143,26 @@ public class MainViewModel : ViewModelBase
     public ICommand ChangeEncodingCommand { get; }
     public ICommand OpenExportConfigCommand { get; }
     public ICommand ExportCommand { get; }
+    public ICommand ExportToSqlCommand { get; }
     public ICommand CancelExportCommand { get; }
     public ICommand OpenColumnFormatsCommand { get; }
     public ICommand ToggleFormatsCommand { get; }
+    public ICommand ConfigureSybaseCommand { get; }
+    public ICommand TransferToSybaseCommand { get; }
 
     public MainViewModel(
         IDbfReaderService dbfReaderService,
         IEncodingDetectionService encodingDetectionService,
         IExportService exportService,
+        IExportService sqlExportService,
+        ISybaseExportService sybaseExportService,
         IColumnFormatService columnFormatService)
     {
         _dbfReaderService = dbfReaderService ?? throw new ArgumentNullException(nameof(dbfReaderService));
         _encodingDetectionService = encodingDetectionService ?? throw new ArgumentNullException(nameof(encodingDetectionService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+        _sqlExportService = sqlExportService ?? throw new ArgumentNullException(nameof(sqlExportService));
+        _sybaseExportService = sybaseExportService ?? throw new ArgumentNullException(nameof(sybaseExportService));
         _columnFormatService = columnFormatService ?? throw new ArgumentNullException(nameof(columnFormatService));
 
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
@@ -151,6 +173,7 @@ public class MainViewModel : ViewModelBase
             async _ => await OpenExportConfigAsync(),
             _ => !IsLoading);
         ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => CanExport);
+        ExportToSqlCommand = new RelayCommand(async _ => await ExportToSqlAsync(), _ => CanExport);
         CancelExportCommand = new RelayCommand(_ => CancelExport(), _ => IsExporting);
         OpenColumnFormatsCommand = new RelayCommand(
             async _ => await OpenColumnFormatsAsync(),
@@ -158,6 +181,12 @@ public class MainViewModel : ViewModelBase
         ToggleFormatsCommand = new RelayCommand(
             _ => AreFormatsActive = !AreFormatsActive,
             _ => HasFile);
+        ConfigureSybaseCommand = new RelayCommand(
+            async _ => await ConfigureSybaseAsync(),
+            _ => !IsLoading);
+        TransferToSybaseCommand = new RelayCommand(
+            async _ => await TransferToSybaseAsync(),
+            _ => CanTransferToSybase);
     }
 
     private async Task OpenFileAsync()
@@ -374,6 +403,176 @@ public class MainViewModel : ViewModelBase
         {
             MessageBox.Show($"Se produjo un error durante la exportacion. El archivo parcial fue eliminado.\n\n{ex.Message}",
                 "Error de exportacion", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        finally
+        {
+            IsExporting = false;
+            _exportCts?.Dispose();
+            _exportCts = null;
+        }
+    }
+
+    private async Task ExportToSqlAsync()
+    {
+        if (CurrentFile == null) return;
+
+        var saveDialog = new SaveFileDialog
+        {
+            Title = "Guardar archivo SQL",
+            Filter = "Archivos SQL (*.sql)|*.sql|Todos los archivos (*.*)|*.*",
+            DefaultExt = ".sql",
+            InitialDirectory = Path.GetDirectoryName(CurrentFile.FilePath),
+            FileName = Path.GetFileNameWithoutExtension(CurrentFile.FilePath) + ".sql"
+        };
+
+        if (saveDialog.ShowDialog() != true) return;
+
+        _exportCts = new CancellationTokenSource();
+        var progressVm = new ExportProgressDialogViewModel(
+            CurrentFile.RecordCount, saveDialog.FileName, () => _exportCts?.Cancel());
+        var progressDialog = new ExportProgressDialog { DataContext = progressVm };
+        progressDialog.Owner = Application.Current.MainWindow;
+
+        var syncContext = SynchronizationContext.Current;
+        var totalRecords = CurrentFile.RecordCount;
+
+        var progress = new Progress<int>(processed =>
+        {
+            progressVm.ProcessedRecords = processed;
+            ExportProgressPercent = (double)processed / totalRecords * 100;
+        });
+
+        try
+        {
+            IsExporting = true;
+            ExportProgressPercent = 0;
+
+            var exportTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await _sqlExportService.ExportAsync(
+                        CurrentFile,
+                        CurrentExportConfig,
+                        saveDialog.FileName,
+                        progress,
+                        _exportCts.Token);
+
+                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
+                }
+                catch (OperationCanceledException)
+                {
+                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
+                    throw;
+                }
+            });
+
+            progressDialog.ShowDialog();
+            await exportTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ExportException ex)
+        {
+            MessageBox.Show(ex.Message, "Error de exportacion SQL",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Se produjo un error durante la exportacion SQL. El archivo parcial fue eliminado.\n\n{ex.Message}",
+                "Error de exportacion SQL", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        finally
+        {
+            IsExporting = false;
+            _exportCts?.Dispose();
+            _exportCts = null;
+        }
+    }
+
+    private async Task ConfigureSybaseAsync()
+    {
+        var configVm = new SybaseConnectionViewModel(
+            _sybaseConfig,
+            result =>
+            {
+                SybaseConfig = result;
+                CommandManager.InvalidateRequerySuggested();
+            });
+
+        var dialog = new SybaseConnectionDialog { DataContext = configVm };
+        dialog.Owner = Application.Current.MainWindow;
+        dialog.ShowDialog();
+        await Task.CompletedTask;
+    }
+
+    private async Task TransferToSybaseAsync()
+    {
+        if (CurrentFile == null || _sybaseConfig == null) return;
+
+        _exportCts = new CancellationTokenSource();
+        var progressVm = new ExportProgressDialogViewModel(
+            CurrentFile.RecordCount, _sybaseConfig.TableName, () => _exportCts?.Cancel());
+        var progressDialog = new ExportProgressDialog { DataContext = progressVm };
+        progressDialog.Owner = Application.Current.MainWindow;
+
+        var syncContext = SynchronizationContext.Current;
+        var totalRecords = CurrentFile.RecordCount;
+
+        var progress = new Progress<int>(processed =>
+        {
+            progressVm.ProcessedRecords = processed;
+            ExportProgressPercent = (double)processed / totalRecords * 100;
+        });
+
+        try
+        {
+            IsExporting = true;
+            ExportProgressPercent = 0;
+
+            var transferTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await _sybaseExportService.TransferAsync(
+                        CurrentFile,
+                        _sybaseConfig,
+                        progress,
+                        _exportCts.Token);
+
+                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
+                }
+                catch (OperationCanceledException)
+                {
+                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
+                    throw;
+                }
+            });
+
+            progressDialog.ShowDialog();
+            await transferTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ExportException ex)
+        {
+            MessageBox.Show(ex.Message, "Error de traspaso Sybase",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            if (progressDialog.IsVisible)
+                progressDialog.Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Se produjo un error durante el traspaso a Sybase.\n\n{ex.Message}",
+                "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
             if (progressDialog.IsVisible)
                 progressDialog.Close();
         }

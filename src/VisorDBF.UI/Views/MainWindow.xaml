@@ -40,6 +40,11 @@
                 <MenuItem Header="Exportar a TXT..."
                           Command="{Binding ExportCommand}"
                           InputGestureText="Ctrl+E"/>
+                <MenuItem Header="Exportar a SQL..."
+                          Command="{Binding ExportToSqlCommand}"/>
+                <Separator/>
+                <MenuItem Header="Traspasar a Sybase..."
+                          Command="{Binding TransferToSybaseCommand}"/>
             </MenuItem>
             <MenuItem Header="Configuración">
                 <MenuItem Header="Configuración de exportación..."
@@ -48,6 +53,9 @@
                           Command="{Binding OpenColumnFormatsCommand}"/>
                 <MenuItem Header="Codificación de lectura..."
                           Command="{Binding ChangeEncodingCommand}"/>
+                <Separator/>
+                <MenuItem Header="Conectar a Sybase..."
+                          Command="{Binding ConfigureSybaseCommand}"/>
             </MenuItem>
             <MenuItem Header="Ayuda">
                 <MenuItem Header="Acerca de..." IsEnabled="False"/>
