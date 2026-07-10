@@ -125,6 +125,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RecentFilesSubmenu_SubmenuOpened(object sender, RoutedEventArgs e)
+    {
+        var menu = sender as MenuItem;
+        if (menu == null) return;
+
+        if (ViewModel is { } vm && !vm.HasRecentFiles)
+        {
+            menu.Items.Clear();
+            menu.Items.Add(new MenuItem
+            {
+                Header = "Sin archivos recientes",
+                IsEnabled = false
+            });
+        }
+    }
+
     private void MenuItem_Salir_Click(object sender, RoutedEventArgs e)
     {
         Application.Current.Shutdown();

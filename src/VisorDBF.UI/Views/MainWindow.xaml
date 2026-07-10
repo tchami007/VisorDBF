@@ -24,7 +24,20 @@
                 <MenuItem Header="Abrir"
                           Command="{Binding OpenFileCommand}"
                           InputGestureText="Ctrl+O"/>
-                <MenuItem Header="Recientes" IsEnabled="False"/>
+                <MenuItem Header="Recientes"
+                          x:Name="RecentFilesMenu"
+                          ItemsSource="{Binding RecentFiles}"
+                          IsEnabled="{Binding HasRecentFiles}"
+                          SubmenuOpened="RecentFilesSubmenu_SubmenuOpened">
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate>
+                            <MenuItem Header="{Binding DisplayName}"
+                                      Command="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=DataContext.OpenRecentFileCommand}"
+                                      CommandParameter="{Binding FilePath}"
+                                      ToolTip="{Binding FilePath}"/>
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
                 <Separator/>
                 <MenuItem Header="Cerrar" IsEnabled="False"/>
                 <Separator/>

@@ -35,6 +35,7 @@ public class MainViewModel : ViewModelBase
     private SybaseConnectionConfig? _sybaseConfig;
     private ApplicationSettings _appSettings = ApplicationSettings.Default;
     private string? _activeProfileName;
+    private List<RecentFileEntry> _recentFiles = new();
 
     public DbfFile? CurrentFile
     {
@@ -130,6 +131,18 @@ public class MainViewModel : ViewModelBase
         set => SetField(ref _activeProfileName, value);
     }
 
+    public List<RecentFileEntry> RecentFiles
+    {
+        get => _recentFiles;
+        private set
+        {
+            if (SetField(ref _recentFiles, value))
+                OnPropertyChanged(nameof(HasRecentFiles));
+        }
+    }
+
+    public bool HasRecentFiles => _recentFiles.Count > 0;
+
     public bool AreFormatsActive
     {
         get => _areFormatsActive;
@@ -160,6 +173,7 @@ public class MainViewModel : ViewModelBase
     public ICommand ToggleFormatsCommand { get; }
     public ICommand ConfigureSybaseCommand { get; }
     public ICommand TransferToSybaseCommand { get; }
+    public ICommand OpenRecentFileCommand { get; }
 
     public MainViewModel(
         IDbfReaderService dbfReaderService,
@@ -192,7 +206,12 @@ public class MainViewModel : ViewModelBase
             }
         }
 
+        _recentFiles = _appSettings.RecentFiles ?? new List<RecentFileEntry>();
+
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
+        OpenRecentFileCommand = new RelayCommand(
+            async parameter => await OpenRecentFileAsync(parameter as string),
+            _ => !IsLoading);
         ChangeEncodingCommand = new RelayCommand(
             async _ => await ChangeEncodingAsync(),
             _ => CurrentFile != null && !IsLoading);
@@ -227,7 +246,11 @@ public class MainViewModel : ViewModelBase
 
         if (dialog.ShowDialog() != true) return;
 
-        var filePath = dialog.FileName;
+        await LoadFileAsync(dialog.FileName);
+    }
+
+    private async Task LoadFileAsync(string filePath)
+    {
         var prevStatus = StatusMessage;
         IsLoading = true;
         StatusMessage = "Cargando...";
@@ -246,8 +269,7 @@ public class MainViewModel : ViewModelBase
                     WarningMessage = $"No se pudo detectar la codificacion automaticamente (Language Driver ID: 0x{languageDriverId:X2}). Seleccione la codificacion correcta:"
                 };
                 var pickerDialog = new EncodingPickerDialog { DataContext = pickerVm };
-                var result = pickerDialog.ShowDialog();
-                if (result != true)
+                if (pickerDialog.ShowDialog() != true)
                 {
                     StatusMessage = prevStatus;
                     return;
@@ -271,6 +293,8 @@ public class MainViewModel : ViewModelBase
             StatusMessage = $"{dbfFile.RecordCount} registros";
             OnPropertyChanged(nameof(WindowTitle));
             OnPropertyChanged(nameof(HasFile));
+
+            AddToRecentFiles(filePath);
         }
         catch (OperationCanceledException)
         {
@@ -642,6 +666,58 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private void AddToRecentFiles(string filePath)
+    {
+        var existing = RecentFiles.FirstOrDefault(r =>
+            r.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
+
+        var entry = new RecentFileEntry
+        {
+            FilePath = filePath,
+            LastOpened = DateTime.UtcNow,
+            DisplayName = Path.GetFileName(filePath)
+        };
+
+        if (existing != null)
+            RecentFiles.Remove(existing);
+
+        RecentFiles.Insert(0, entry);
+
+        if (RecentFiles.Count > 15)
+            RecentFiles = RecentFiles.Take(15).ToList();
+        else
+            OnPropertyChanged(nameof(RecentFiles));
+
+        OnPropertyChanged(nameof(HasRecentFiles));
+        SaveSettings();
+    }
+
+    private async Task OpenRecentFileAsync(string? filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return;
+
+        if (!File.Exists(filePath))
+        {
+            var result = MessageBox.Show(
+                $"El archivo \"{filePath}\" ya no existe.\nDesea eliminarlo de la lista de recientes?",
+                "Archivo no encontrado",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                RecentFiles.RemoveAll(r =>
+                    r.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
+                OnPropertyChanged(nameof(RecentFiles));
+                OnPropertyChanged(nameof(HasRecentFiles));
+                SaveSettings();
+            }
+            return;
+        }
+
+        await LoadFileAsync(filePath);
+    }
+
     private void SaveSettings()
     {
         if (_settingsService == null) return;
@@ -649,7 +725,8 @@ public class MainViewModel : ViewModelBase
         _appSettings = _appSettings with
         {
             DefaultExportConfig = CurrentExportConfig,
-            LastProfileName = ActiveProfileName
+            LastProfileName = ActiveProfileName,
+            RecentFiles = RecentFiles
         };
 
         _settingsService.Save(_appSettings);
