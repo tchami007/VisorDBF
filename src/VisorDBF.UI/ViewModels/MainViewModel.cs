@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using VisorDBF.Core.Exceptions;
 using VisorDBF.Core.Models;
 using VisorDBF.Core.Services;
+using VisorDBF.UI.Helpers;
 using VisorDBF.UI.Views;
 
 namespace VisorDBF.UI.ViewModels;
@@ -411,7 +412,6 @@ public class MainViewModel : ViewModelBase
         var syncContext = SynchronizationContext.Current;
         var totalRecords = CurrentFile.RecordCount;
 
-        // Crear Progress<int> en el UI thread para que capture el SynchronizationContext de la UI
         var progress = new Progress<int>(processed =>
         {
             progressVm.ProcessedRecords = processed;
@@ -423,26 +423,17 @@ public class MainViewModel : ViewModelBase
             IsExporting = true;
             ExportProgressPercent = 0;
 
-            var exportTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await _exportService.ExportAsync(
-                        CurrentFile,
-                        CurrentExportConfig,
-                        saveDialog.FileName,
-                        progress,
-                        _exportCts.Token,
-                        CurrentColumnFormats);
-
-                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
-                }
-                catch (OperationCanceledException)
-                {
-                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
-                    throw;
-                }
-            });
+            var exportTask = ExportHelper.RunExportAsync(
+                _exportService,
+                CurrentFile,
+                CurrentExportConfig,
+                saveDialog.FileName,
+                CurrentColumnFormats,
+                progress,
+                syncContext,
+                _exportCts.Token,
+                () => progressVm.IsComplete = true,
+                () => progressVm.IsCancelled = true);
 
             progressDialog.ShowDialog();
 
@@ -450,7 +441,6 @@ public class MainViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            // Ya se manejó dentro del Task.Run (IsCancelled = true en el diálogo)
         }
         catch (ExportException ex)
         {
@@ -515,56 +505,27 @@ public class MainViewModel : ViewModelBase
             IsExporting = true;
             ExportProgressPercent = 0;
 
-            var transferTask = Task.Run(async () =>
-            {
-                try
+            var transferTask = SybaseTransferHelper.RunTransferAsync(
+                _sybaseExportService,
+                CurrentFile,
+                _sybaseConfig,
+                progress,
+                syncContext,
+                _exportCts.Token,
+                () => progressVm.IsComplete = true,
+                () => progressVm.IsCancelled = true,
+                errorMsg =>
                 {
-                    var probeOk = await _sybaseExportService.ProbeFirstRecordAsync(
-                        CurrentFile, _sybaseConfig, _exportCts.Token);
-
-                    if (!probeOk)
-                    {
-                        syncContext?.Post(_ =>
-                        {
-                            MessageBox.Show("El probe de conversiones fallo. Revise el log para mas detalles.",
-                                "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
-                            progressDialog.Close();
-                        }, null);
-                        return;
-                    }
-
-                    await _sybaseExportService.TransferAsync(
-                        CurrentFile,
-                        _sybaseConfig,
-                        progress,
-                        _exportCts.Token);
-
-                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
-                }
-                catch (OperationCanceledException)
+                    MessageBox.Show(errorMsg, "Error de traspaso Sybase",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    progressDialog.Close();
+                },
+                errorMsg =>
                 {
-                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
-                    throw;
-                }
-                catch (ExportException ex)
-                {
-                    syncContext?.Post(_ =>
-                    {
-                        MessageBox.Show(ex.Message, "Error de traspaso Sybase",
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                        progressDialog.Close();
-                    }, null);
-                }
-                catch (Exception ex)
-                {
-                    syncContext?.Post(_ =>
-                    {
-                        MessageBox.Show($"Se produjo un error durante el traspaso a Sybase.\n\n{ex.Message}",
-                            "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
-                        progressDialog.Close();
-                    }, null);
-                }
-            });
+                    MessageBox.Show(errorMsg, "Error de traspaso Sybase",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    progressDialog.Close();
+                });
 
             progressDialog.ShowDialog();
             await transferTask;
