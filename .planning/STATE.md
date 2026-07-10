@@ -3,14 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "### Phase 1: Cimientos — Solucion, Lectura DBF y Grilla"
 current_phase: 4 — Perfiles, Persistencia y Polish
-status: Ready to plan
-stopped_at: Phase 3 implemented and committed (82/82 tests pass)
-last_updated: "2026-07-07T16:02:45.000Z"
+status: Ready to plan Phase 4
+stopped_at: Phase 3 complete — all 3 plans executed and committed (82/82 tests pass)
+last_updated: "2026-07-10T12:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 17
   completed_plans: 12
+  planned_plans: 5
   percent: 71
 ---
 
@@ -40,10 +41,10 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 |-------|------|--------|-------|
 | 1 | Cimientos — Solucion, Lectura DBF y Grilla | **Complete** (5/5) | 5 plans |
 | 2 | Exportacion — Configuracion y Escritura TXT | **Complete** (4/4) | 4 plans |
-| 3 | Formatos por Columna | **Planned** (0/3 executed) | 3 plans |
+| 3 | Formatos por Columna | **Complete** (3/3) | 3 plans |
 | 4 | Perfiles, Persistencia y Polish | Not started | 5 plans |
 
-**Total plans:** 17 | **Completed:** 9 | **Planned:** 3 | **Remaining:** 5
+**Total plans:** 17 | **Completed:** 12 | **Planned:** 0 | **Remaining:** 5
 
 ---
 
@@ -107,6 +108,9 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 | 2026-07-07 | Wave 4 (Plan 2.4) — Integration: 4 tasks, 51/51 tests, build clean. Phase 2 COMPLETE. |
 | 2026-07-07 | Phase 3 context gathered — 15 decisions, 3 areas discussed |
 | 2026-07-07 | Phase 3 plans created — 3 plans (3 waves), verified and corrected |
+| 2026-07-07 | Phase 3 executed — 3/3 plans, 82/82 tests. Phase 3 COMPLETE. |
+| 2026-07-08 | Quick: sybase-traspaso-directo — exportacion a Sybase ASE desde DBF |
+| 2026-07-10 | Docs synced — ROADMAP/STATE updated for Phase 3 completion |
 
 ---
 
@@ -123,16 +127,17 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 ## Next Action
 
 ```
-Phase 3 PLANNED — 3 plans (3 waves) ready for execution.
-Next: Execute Phase 3 — Formatos por Columna
+Phase 4 — Perfiles, Persistencia y Polish (5 plans)
+Status: Planned — 5/5 plans ready for execution
+Next: Execute Plan 4.1 via /gsd-execute-phase or gsd-quick
 ```
 
 ---
 
-*State updated: 2026-07-07 after Phase 3 completion — audit: ROADMAP.md and STATE.md table need sync*
+*State updated: 2026-07-10 — Phase 3 synced, Phase 4 planned (5 plans with CONTEXT.md + 5 PLAN.md files)*
 
 ## Session
 
-**Last session:** 2026-07-07
-**Stopped at:** Resume session — status presented, user paused. Pending: sync ROADMAP/STATE for Phase 3, then Phase 4 planning.
-**Next:** Resume by running `/gsd-resume-work` — will pick up from Phase 4 planning entry point.
+**Last session:** 2026-07-10
+**Stopped at:** Phase 4 fully planned — 5 plans in 3 waves. Ready for Wave 1 execution (Plan 4.1).
+**Next:** Execute Plan 4.1 — ISettingsService + JsonSettingsService + models

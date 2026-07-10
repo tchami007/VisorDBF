@@ -86,10 +86,11 @@ FMT-01, FMT-02, FMT-03, FMT-04, FMT-05
 
 **Plans:**
 
-0/3 plans complete
+3/3 plans complete
 
-- [ ] 3.2 — Pantalla de formatos de columna (ColumnFormatsWindow con DataGrid editable, columna Previa, panel de ayuda)
-- [ ] 3.3 — Integracion de formatos en TxtExportService y en la grilla principal
+- [x] 3.1 — ColumnFormat model + ColumnFormatService con preview/validation ✓ 2026-07-07
+- [x] 3.2 — ColumnFormatsWindow con DataGrid editable, columna Previa, panel de ayuda, header indicator + clear all ✓ 2026-07-07
+- [x] 3.3 — Integracion de formatos en TxtExportService (CurrentCulture) y en la grilla principal ✓ 2026-07-07
 
 ---
 
@@ -113,11 +114,13 @@ OPEN-05, PROF-01, PROF-02, PROF-03, PROF-04, PERS-01, PERS-02, PERS-03
 
 **Plans:**
 
-- [ ] 4.1 — Servicio de persistencia (ISettingsService, JsonSettingsService, esquema ApplicationSettings + ExportProfile)
-- [ ] 4.2 — Gestion de perfiles en UI (selector en barra de herramientas, CRUD de perfiles en pantalla de configuracion)
-- [ ] 4.3 — Lista de archivos recientes (menu Recientes, deteccion de archivos faltantes, limite de entradas)
-- [ ] 4.4 — Persistencia de estado de ventana y recuperacion ante settings.json corrupto
-- [ ] 4.5 — Build de distribucion (dotnet publish self-contained win-x64, validacion de ejecucion sin .NET previo)
+5/5 plans planned
+
+- [~] 4.1 — Servicio de persistencia — modelos (ApplicationSettings, ExportProfile, RecentFileEntry, WindowSettings), ISettingsService, JsonSettingsService con atomic write, backup en corruptos ✓ Planned 2026-07-10
+- [~] 4.2 — Gestion de perfiles en UI — SaveProfileDialog, selector en ExportConfigurationDialog, comandos Guardar/Renombrar/Eliminar ✓ Planned 2026-07-10
+- [~] 4.3 — Lista de archivos recientes — RecentFiles en MainViewModel, submenu en MainWindow, max 15 entradas, deteccion de archivos faltantes ✓ Planned 2026-07-10
+- [~] 4.4 — Persistencia de ventana — save/restore posicion/tamano en MainWindow, bounds validation, corrupt settings recovery ✓ Planned 2026-07-10
+- [~] 4.5 — Build de distribucion — dotnet publish self-contained win-x64, ApplicationIcon, publish instructions ✓ Planned 2026-07-10
 
 ---
 
