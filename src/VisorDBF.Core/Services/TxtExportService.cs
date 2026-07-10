@@ -55,7 +55,7 @@ public class TxtExportService : IExportService
                 if (config.RowLimitMode == RowLimitMode.FirstN && exported >= config.MaxRows)
                     break;
 
-                var line = BuildLine(record, file.Fields, config, columnFormats, _formatService, numberCulture);
+                var line = BuildLine(new ExportLineContext(record, file.Fields, config, columnFormats, _formatService, numberCulture));
                 await writer.WriteLineAsync(line.AsMemory(), cancellationToken);
 
                 exported++;
@@ -80,24 +80,18 @@ public class TxtExportService : IExportService
         }
     }
 
-    internal static string BuildLine(
-        DbfRecord record,
-        IReadOnlyList<DbfField> fields,
-        ExportConfiguration config,
-        ColumnFormatConfiguration? columnFormats = null,
-        IColumnFormatService? formatService = null,
-        CultureInfo? numberCulture = null)
+    internal static string BuildLine(ExportLineContext context)
     {
-        numberCulture ??= GetNumberCulture(config.DecimalSeparator);
-        var values = fields.Select(f => FormatValue(
-            record.Values.GetValueOrDefault(f.Name),
+        var numberCulture = context.NumberCulture ?? GetNumberCulture(context.Config.DecimalSeparator);
+        var values = context.Fields.Select(f => FormatValue(
+            context.Record.Values.GetValueOrDefault(f.Name),
             f.Name,
-            columnFormats,
-            formatService,
+            context.ColumnFormats,
+            context.FormatService,
             numberCulture));
-        var line = string.Join(config.ColumnSeparator, values);
-        if (!string.IsNullOrEmpty(config.RowEndDelimiter))
-            line += config.RowEndDelimiter;
+        var line = string.Join(context.Config.ColumnSeparator, values);
+        if (!string.IsNullOrEmpty(context.Config.RowEndDelimiter))
+            line += context.Config.RowEndDelimiter;
         return line;
     }
 

@@ -74,7 +74,7 @@ public class TxtExportServiceTests
         var record = file.Records[0];
         var config = ExportConfiguration.Default;
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config));
 
         line.Should().Be("Persona 1;25;2024-01-01");
     }
@@ -86,7 +86,7 @@ public class TxtExportServiceTests
         var record = file.Records[0];
         var config = new ExportConfiguration { RowEndDelimiter = "|END" };
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config));
 
         line.Should().EndWith("|END");
     }
@@ -315,7 +315,7 @@ public class TxtExportServiceTests
             IsActive = true
         };
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config, columnFormats, formatService));
         line.Should().Be("Persona 1;00025;2024/01/01");
     }
 
@@ -333,7 +333,7 @@ public class TxtExportServiceTests
             IsActive = false
         };
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config, columnFormats, formatService));
         line.Should().Be("Persona 1;25;2024-01-01");
     }
 
@@ -344,7 +344,7 @@ public class TxtExportServiceTests
         var record = file.Records[0];
         var config = ExportConfiguration.Default;
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config, null, null);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config, null, null));
         line.Should().Be("Persona 1;25;2024-01-01");
     }
 
@@ -364,7 +364,7 @@ public class TxtExportServiceTests
             IsActive = true
         };
 
-        var line = TxtExportService.BuildLine(record, file.Fields, config, columnFormats, formatService);
+        var line = TxtExportService.BuildLine(new ExportLineContext(record, file.Fields, config, columnFormats, formatService));
         line.Should().Be("dummy;25;2024-01-01");
     }
 
