@@ -18,6 +18,7 @@ public class MainViewModel : ViewModelBase
     private readonly IExportService _sqlExportService;
     private readonly ISybaseExportService _sybaseExportService;
     private readonly IColumnFormatService _columnFormatService;
+    private readonly ISettingsService _settingsService;
 
     private DbfFile? _currentFile;
     private IReadOnlyList<DbfRecord> _records = Array.Empty<DbfRecord>();
@@ -32,6 +33,8 @@ public class MainViewModel : ViewModelBase
     private bool _areFormatsActive;
     private ColumnFormatConfiguration _currentColumnFormats = ColumnFormatConfiguration.Default;
     private SybaseConnectionConfig? _sybaseConfig;
+    private ApplicationSettings _appSettings = ApplicationSettings.Default;
+    private string? _activeProfileName;
 
     public DbfFile? CurrentFile
     {
@@ -119,6 +122,14 @@ public class MainViewModel : ViewModelBase
 
     public bool CanTransferToSybase => SybaseConfig?.IsValid == true && HasFile && !IsExporting;
 
+    public ApplicationSettings Settings => _appSettings;
+
+    public string? ActiveProfileName
+    {
+        get => _activeProfileName;
+        set => SetField(ref _activeProfileName, value);
+    }
+
     public bool AreFormatsActive
     {
         get => _areFormatsActive;
@@ -156,7 +167,9 @@ public class MainViewModel : ViewModelBase
         IExportService exportService,
         IExportService sqlExportService,
         ISybaseExportService sybaseExportService,
-        IColumnFormatService columnFormatService)
+        IColumnFormatService columnFormatService,
+        ISettingsService? settingsService = null,
+        ApplicationSettings? appSettings = null)
     {
         _dbfReaderService = dbfReaderService ?? throw new ArgumentNullException(nameof(dbfReaderService));
         _encodingDetectionService = encodingDetectionService ?? throw new ArgumentNullException(nameof(encodingDetectionService));
@@ -164,6 +177,20 @@ public class MainViewModel : ViewModelBase
         _sqlExportService = sqlExportService ?? throw new ArgumentNullException(nameof(sqlExportService));
         _sybaseExportService = sybaseExportService ?? throw new ArgumentNullException(nameof(sybaseExportService));
         _columnFormatService = columnFormatService ?? throw new ArgumentNullException(nameof(columnFormatService));
+        _settingsService = settingsService ?? new JsonSettingsService();
+        _appSettings = appSettings ?? _settingsService.Load();
+
+        if (_appSettings.LastProfileName != null)
+        {
+            var profile = _appSettings.Profiles
+                .FirstOrDefault(p => p.Name == _appSettings.LastProfileName);
+            if (profile != null)
+            {
+                _currentExportConfig = profile.Config;
+                _currentColumnFormats = profile.ColumnFormats;
+                _activeProfileName = profile.Name;
+            }
+        }
 
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
         ChangeEncodingCommand = new RelayCommand(
@@ -294,13 +321,26 @@ public class MainViewModel : ViewModelBase
     {
         var configVm = new ExportConfigurationViewModel(
             CurrentExportConfig,
-            result => CurrentExportConfig = result);
+            result =>
+            {
+                CurrentExportConfig = result;
+                SaveSettings();
+            },
+            _appSettings.Profiles,
+            ActiveProfileName);
+
+        configVm.ProfilesChanged += () =>
+        {
+            _appSettings = _appSettings with { Profiles = configVm.Profiles };
+            SaveSettings();
+        };
 
         var dialog = new ExportConfigurationDialog { DataContext = configVm };
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() == true)
         {
+            ActiveProfileName = configVm.SelectedProfile?.Name;
         }
         await Task.CompletedTask;
     }
@@ -541,6 +581,20 @@ public class MainViewModel : ViewModelBase
             {
                 try
                 {
+                    var probeOk = await _sybaseExportService.ProbeFirstRecordAsync(
+                        CurrentFile, _sybaseConfig, _exportCts.Token);
+
+                    if (!probeOk)
+                    {
+                        syncContext?.Post(_ =>
+                        {
+                            MessageBox.Show("El probe de conversiones fallo. Revise el log para mas detalles.",
+                                "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
+                            progressDialog.Close();
+                        }, null);
+                        return;
+                    }
+
                     await _sybaseExportService.TransferAsync(
                         CurrentFile,
                         _sybaseConfig,
@@ -554,6 +608,24 @@ public class MainViewModel : ViewModelBase
                     syncContext?.Post(_ => progressVm.IsCancelled = true, null);
                     throw;
                 }
+                catch (ExportException ex)
+                {
+                    syncContext?.Post(_ =>
+                    {
+                        MessageBox.Show(ex.Message, "Error de traspaso Sybase",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        progressDialog.Close();
+                    }, null);
+                }
+                catch (Exception ex)
+                {
+                    syncContext?.Post(_ =>
+                    {
+                        MessageBox.Show($"Se produjo un error durante el traspaso a Sybase.\n\n{ex.Message}",
+                            "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
+                        progressDialog.Close();
+                    }, null);
+                }
             });
 
             progressDialog.ShowDialog();
@@ -562,26 +634,44 @@ public class MainViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
         }
-        catch (ExportException ex)
-        {
-            MessageBox.Show(ex.Message, "Error de traspaso Sybase",
-                MessageBoxButton.OK, MessageBoxImage.Error);
-            if (progressDialog.IsVisible)
-                progressDialog.Close();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Se produjo un error durante el traspaso a Sybase.\n\n{ex.Message}",
-                "Error de traspaso Sybase", MessageBoxButton.OK, MessageBoxImage.Error);
-            if (progressDialog.IsVisible)
-                progressDialog.Close();
-        }
         finally
         {
             IsExporting = false;
             _exportCts?.Dispose();
             _exportCts = null;
         }
+    }
+
+    private void SaveSettings()
+    {
+        if (_settingsService == null) return;
+
+        _appSettings = _appSettings with
+        {
+            DefaultExportConfig = CurrentExportConfig,
+            LastProfileName = ActiveProfileName
+        };
+
+        _settingsService.Save(_appSettings);
+    }
+
+    public void SaveWindowSettings(WindowSettings ws)
+    {
+        _appSettings = _appSettings with { WindowState = ws };
+    }
+
+    public void SaveSettingsOnClose()
+    {
+        _appSettings = _appSettings with
+        {
+            DefaultExportConfig = CurrentExportConfig,
+            LastProfileName = ActiveProfileName,
+            Profiles = _appSettings.Profiles,
+            RecentFiles = _appSettings.RecentFiles,
+            WindowState = _appSettings.WindowState
+        };
+
+        _settingsService.Save(_appSettings);
     }
 
     private void CancelExport()

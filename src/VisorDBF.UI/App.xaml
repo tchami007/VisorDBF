@@ -8,6 +8,8 @@
         <ResourceDictionary>
             <converters:StringEqualsConverter x:Key="StringEqualsConverter"/>
             <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter"/>
             <converters:ColumnFormatConverter x:Key="ColumnFormatConverter"/>
             <Style x:Key="PrimaryButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="#0078D4"/>
