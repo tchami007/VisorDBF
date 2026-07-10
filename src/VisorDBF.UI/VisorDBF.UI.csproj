@@ -8,7 +8,13 @@
     <LangVersion>12.0</LangVersion>
     <RootNamespace>VisorDBF.UI</RootNamespace>
     <AssemblyName>VisorDBF</AssemblyName>
-    <!-- ApplicationIcon deferred to Phase 4: Resources/app.ico -->
+    <!-- ApplicationIcon: Descomentar cuando exista assets/VisorDBF.ico -->
+    <!-- <ApplicationIcon>..\..\assets\VisorDBF.ico</ApplicationIcon> -->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
