@@ -23,6 +23,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContextChanged += (_, _) => SubscribeToViewModel();
+        Loaded += MainWindow_Loaded;
+        Closing += MainWindow_Closing;
     }
 
     private void SubscribeToViewModel()
@@ -122,6 +124,52 @@ public partial class MainWindow : Window
             };
 
             MainDataGrid.Columns.Add(col);
+        }
+    }
+
+    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } vm && vm.Settings != null)
+        {
+            var ws = vm.Settings.WindowState;
+
+            if (!double.IsNaN(ws.Left) && !double.IsNaN(ws.Top) &&
+                !double.IsNaN(ws.Width) && !double.IsNaN(ws.Height))
+            {
+                var rect = new System.Windows.Rect(ws.Left, ws.Top, ws.Width, ws.Height);
+                var workArea = SystemParameters.WorkArea;
+                var isVisible = rect.Left < workArea.Right && rect.Right > workArea.Left &&
+                                rect.Top < workArea.Bottom && rect.Bottom > workArea.Top;
+
+                if (isVisible)
+                {
+                    Left = ws.Left;
+                    Top = ws.Top;
+                    Width = Math.Max(ws.Width, 800);
+                    Height = Math.Max(ws.Height, 400);
+
+                    if (ws.IsMaximized)
+                        WindowState = System.Windows.WindowState.Maximized;
+                }
+            }
+        }
+    }
+
+    private void MainWindow_Closing(object? sender, CancelEventArgs e)
+    {
+        if (ViewModel is { } vm)
+        {
+            var ws = new WindowSettings
+            {
+                Left = WindowState == System.Windows.WindowState.Maximized ? RestoreBounds.Left : Left,
+                Top = WindowState == System.Windows.WindowState.Maximized ? RestoreBounds.Top : Top,
+                Width = WindowState == System.Windows.WindowState.Maximized ? RestoreBounds.Width : Width,
+                Height = WindowState == System.Windows.WindowState.Maximized ? RestoreBounds.Height : Height,
+                IsMaximized = WindowState == System.Windows.WindowState.Maximized
+            };
+
+            vm.SaveWindowSettings(ws);
+            vm.SaveSettingsOnClose();
         }
     }
 
