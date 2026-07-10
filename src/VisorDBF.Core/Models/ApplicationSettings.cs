@@ -8,6 +8,7 @@ public sealed record ApplicationSettings
     public List<RecentFileEntry> RecentFiles { get; init; } = new();
     public WindowSettings WindowState { get; init; } = WindowSettings.Default;
     public string? LastProfileName { get; init; }
+    public SybaseConnectionConfig? SybaseConfig { get; init; }
 
     public static ApplicationSettings Default { get; } = new();
 }

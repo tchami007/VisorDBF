@@ -114,13 +114,13 @@ OPEN-05, PROF-01, PROF-02, PROF-03, PROF-04, PERS-01, PERS-02, PERS-03
 
 **Plans:**
 
-5/5 plans planned
+5/5 plans complete
 
-- [~] 4.1 — Servicio de persistencia — modelos (ApplicationSettings, ExportProfile, RecentFileEntry, WindowSettings), ISettingsService, JsonSettingsService con atomic write, backup en corruptos ✓ Planned 2026-07-10
-- [~] 4.2 — Gestion de perfiles en UI — SaveProfileDialog, selector en ExportConfigurationDialog, comandos Guardar/Renombrar/Eliminar ✓ Planned 2026-07-10
-- [~] 4.3 — Lista de archivos recientes — RecentFiles en MainViewModel, submenu en MainWindow, max 15 entradas, deteccion de archivos faltantes ✓ Planned 2026-07-10
-- [~] 4.4 — Persistencia de ventana — save/restore posicion/tamano en MainWindow, bounds validation, corrupt settings recovery ✓ Planned 2026-07-10
-- [~] 4.5 — Build de distribucion — dotnet publish self-contained win-x64, ApplicationIcon, publish instructions ✓ Planned 2026-07-10
+- [x] 4.1 — Servicio de persistencia — modelos, ISettingsService, JsonSettingsService ✓ 2026-07-10
+- [x] 4.2 — Gestion de perfiles en UI — SaveProfileDialog, selector en ExportConfigDialog ✓ 2026-07-10
+- [x] 4.3 — Lista de archivos recientes — RecentFiles, submenu, deteccion de archivos faltantes ✓ 2026-07-10
+- [x] 4.4 — Persistencia de ventana — save/restore posicion/tamano, bounds validation ✓ 2026-07-10
+- [x] 4.5 — Build de distribucion — self-contained win-x64 config ✓ 2026-07-10
 
 ---
 
@@ -146,6 +146,17 @@ Phase 1 (Core + Apertura + Grilla)
 
 Fases secuenciales. Dentro de cada fase, los planes pueden ejecutarse en paralelo donde no haya dependencias directas (ver indicacion en cada plan).
 
+### Milestone v1.0 Complete
+
+All 4 phases, 17 plans, 90/90 tests passing. Core value delivered: un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y exportarlo a TXT con la configuracion exacta que necesita — en menos de tres clicks desde el inicio.
+
+| | Phase | Plans |
+|---|-------|-------|
+| ✅ | 1 — Cimientos | 5/5 |
+| ✅ | 2 — Exportación | 4/4 |
+| ✅ | 3 — Formatos por Columna | 3/3 |
+| ✅ | 4 — Perfiles, Persistencia y Polish | 5/5 |
+
 ---
 *Roadmap created: 2026-07-06*
-*Last updated: 2026-07-07 after Phase 2 planning (4 plans in 3 waves, verified)*
+*Last updated: 2026-07-10 — Milestone v1.0 complete*

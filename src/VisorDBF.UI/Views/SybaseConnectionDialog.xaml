@@ -104,6 +104,29 @@
                         <TextBlock Text="{Binding ConnectionString}"
                                    FontSize="10" Foreground="#A0A0A0"
                                    FontFamily="Consolas"/>
+                        <Expander Header="Ver detalle tecnico"
+                                  IsExpanded="False"
+                                  Visibility="{Binding HasDetailedError, Converter={StaticResource BoolToVisibilityConverter}}"
+                                  Margin="0,6,0,0">
+                            <StackPanel>
+                                <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding DetailedError}"
+                                               FontSize="10"
+                                               FontFamily="Consolas"
+                                               TextWrapping="Wrap"
+                                               Foreground="#5E5E5E"
+                                               Margin="0,4,0,0"/>
+                                </ScrollViewer>
+                                <Button Content="Copiar detalle"
+                                        Command="{Binding CopyDetailsCommand}"
+                                        Width="110" Height="24"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,4,0,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        FontSize="11"
+                                        ToolTip="Copia el error completo + connection string al portapapeles"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                 </GroupBox>
 

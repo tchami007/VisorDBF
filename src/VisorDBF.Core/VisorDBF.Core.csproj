@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AdoNetCore.AseClient" Version="0.*" />
     <PackageReference Include="DbfDataReader" Version="0.4.*" />
+    <PackageReference Include="System.Data.Odbc" Version="8.*" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.*" />
   </ItemGroup>
 </Project>

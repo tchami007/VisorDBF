@@ -16,7 +16,7 @@ public class ExportConfigurationTests
     [Fact]
     public void Default_HasUtf8Encoding()
     {
-        ExportConfiguration.Default.OutputEncoding.Should().Be(Encoding.UTF8);
+        ExportConfiguration.Default.OutputEncoding.Should().Be(ExportConfiguration.UTF8NoBOM);
     }
 
     [Fact]

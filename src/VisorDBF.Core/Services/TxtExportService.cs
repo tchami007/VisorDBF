@@ -23,10 +23,14 @@ public class TxtExportService : IExportService
     {
         try
         {
+            var encoding = config.OutputEncoding.CodePage == 65001
+                ? ExportConfiguration.UTF8NoBOM
+                : config.OutputEncoding;
+
             using var writer = new StreamWriter(
                 outputPath,
                 append: false,
-                encoding: config.OutputEncoding,
+                encoding: encoding,
                 bufferSize: 65536);
 
             int targetCount = config.RowLimitMode == RowLimitMode.FirstN
@@ -34,6 +38,8 @@ public class TxtExportService : IExportService
                 : file.RecordCount;
 
             int throttleInterval = Math.Max(1, targetCount / 1000);
+
+            var numberCulture = GetNumberCulture(config.DecimalSeparator);
 
             if (config.IncludeHeader)
             {
@@ -49,7 +55,7 @@ public class TxtExportService : IExportService
                 if (config.RowLimitMode == RowLimitMode.FirstN && exported >= config.MaxRows)
                     break;
 
-                var line = BuildLine(record, file.Fields, config, columnFormats, _formatService);
+                var line = BuildLine(record, file.Fields, config, columnFormats, _formatService, numberCulture);
                 await writer.WriteLineAsync(line.AsMemory(), cancellationToken);
 
                 exported++;
@@ -79,13 +85,16 @@ public class TxtExportService : IExportService
         IReadOnlyList<DbfField> fields,
         ExportConfiguration config,
         ColumnFormatConfiguration? columnFormats = null,
-        IColumnFormatService? formatService = null)
+        IColumnFormatService? formatService = null,
+        CultureInfo? numberCulture = null)
     {
+        numberCulture ??= GetNumberCulture(config.DecimalSeparator);
         var values = fields.Select(f => FormatValue(
             record.Values.GetValueOrDefault(f.Name),
             f.Name,
             columnFormats,
-            formatService));
+            formatService,
+            numberCulture));
         var line = string.Join(config.ColumnSeparator, values);
         if (!string.IsNullOrEmpty(config.RowEndDelimiter))
             line += config.RowEndDelimiter;
@@ -96,8 +105,11 @@ public class TxtExportService : IExportService
         object? value,
         string? fieldName = null,
         ColumnFormatConfiguration? columnFormats = null,
-        IColumnFormatService? formatService = null)
+        IColumnFormatService? formatService = null,
+        CultureInfo? numberCulture = null)
     {
+        numberCulture ??= CultureInfo.InvariantCulture;
+
         if (columnFormats?.IsActive == true && fieldName != null
             && columnFormats.Formats.TryGetValue(fieldName, out var format)
             && !string.IsNullOrEmpty(format)
@@ -105,7 +117,7 @@ public class TxtExportService : IExportService
         {
             try
             {
-                return formattable.ToString(format, CultureInfo.InvariantCulture);
+                return formattable.ToString(format, numberCulture);
             }
             catch (FormatException)
             {
@@ -117,11 +129,23 @@ public class TxtExportService : IExportService
         {
             null => string.Empty,
             DateTime dt => dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            IFormattable fmt => fmt.ToString(null, CultureInfo.CurrentCulture),
+            IFormattable fmt => fmt.ToString(null, numberCulture),
             _ => value.ToString() ?? string.Empty
         };
     }
 
     internal static string FormatValue(object? value)
-        => FormatValue(value, null, null, null);
+        => FormatValue(value, null, null, null, null);
+
+    internal static CultureInfo GetNumberCulture(string decimalSeparator)
+    {
+        if (decimalSeparator == ",")
+        {
+            var culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+            culture.NumberFormat.NumberDecimalSeparator = ",";
+            culture.NumberFormat.NumberGroupSeparator = "";
+            return culture;
+        }
+        return CultureInfo.InvariantCulture;
+    }
 }

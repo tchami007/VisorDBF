@@ -13,4 +13,6 @@ public sealed record SybaseConnectionConfig
         && !string.IsNullOrWhiteSpace(Database)
         && !string.IsNullOrWhiteSpace(Username)
         && !string.IsNullOrWhiteSpace(TableName);
+
+    public SybaseConnectionConfig WithoutPassword() => this with { Password = string.Empty };
 }

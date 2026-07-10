@@ -3,16 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: "### Phase 1: Cimientos — Solucion, Lectura DBF y Grilla"
 current_phase: 4 — Perfiles, Persistencia y Polish
-status: Ready to plan Phase 4
-stopped_at: Phase 3 complete — all 3 plans executed and committed (82/82 tests pass)
-last_updated: "2026-07-10T12:00:00.000Z"
+status: Phase 4 complete — all 5 plans executed
+stopped_at: Milestone v1.0 complete — all 4 phases, 17 plans, 90/90 tests pass
+last_updated: "2026-07-10T15:00:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 12
-  planned_plans: 5
-  percent: 71
+  completed_plans: 17
+  percent: 100
 ---
 
 # Project State: VisorDBF
@@ -42,9 +41,9 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 | 1 | Cimientos — Solucion, Lectura DBF y Grilla | **Complete** (5/5) | 5 plans |
 | 2 | Exportacion — Configuracion y Escritura TXT | **Complete** (4/4) | 4 plans |
 | 3 | Formatos por Columna | **Complete** (3/3) | 3 plans |
-| 4 | Perfiles, Persistencia y Polish | Not started | 5 plans |
+| 4 | Perfiles, Persistencia y Polish | **Complete** (5/5) | 5 plans |
 
-**Total plans:** 17 | **Completed:** 12 | **Planned:** 0 | **Remaining:** 5
+**Total plans:** 17 | **Completed:** 17 | **Planned:** 0 | **Remaining:** 0
 
 ---
 
@@ -111,6 +110,13 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 | 2026-07-07 | Phase 3 executed — 3/3 plans, 82/82 tests. Phase 3 COMPLETE. |
 | 2026-07-08 | Quick: sybase-traspaso-directo — exportacion a Sybase ASE desde DBF |
 | 2026-07-10 | Docs synced — ROADMAP/STATE updated for Phase 3 completion |
+| 2026-07-10 | Phase 4 planned — CONTEXT.md + 5 PLAN.md files |
+| 2026-07-10 | Plan 4.1 executed — ISettingsService, JsonSettingsService, models, 8 tests |
+| 2026-07-10 | Plan 4.2 executed — SaveProfileDialog, profile management in ExportConfig |
+| 2026-07-10 | Plan 4.3 executed — RecentFiles logic + menu |
+| 2026-07-10 | Plan 4.4 executed — Window state persistence + corrupt recovery |
+| 2026-07-10 | Plan 4.5 executed — Build distribution config |
+| 2026-07-10 | **Milestone v1.0 COMPLETE** — 4 phases, 17 plans, 90/90 tests |
 
 ---
 
@@ -127,17 +133,16 @@ See: `.planning/PROJECT.md` (updated 2026-07-06)
 ## Next Action
 
 ```
-Phase 4 — Perfiles, Persistencia y Polish (5 plans)
-Status: Planned — 5/5 plans ready for execution
-Next: Execute Plan 4.1 via /gsd-execute-phase or gsd-quick
+Milestone v1.0 COMPLETE — all 4 phases, 17 plans executed, 90/90 tests pass.
+Next: Archive milestone via /gsd-complete-milestone or begin v2 planning.
 ```
 
 ---
 
-*State updated: 2026-07-10 — Phase 3 synced, Phase 4 planned (5 plans with CONTEXT.md + 5 PLAN.md files)*
+*State updated: 2026-07-10 — Phase 4 complete. Milestone v1.0 delivered.*
 
 ## Session
 
 **Last session:** 2026-07-10
-**Stopped at:** Phase 4 fully planned — 5 plans in 3 waves. Ready for Wave 1 execution (Plan 4.1).
-**Next:** Execute Plan 4.1 — ISettingsService + JsonSettingsService + models
+**Stopped at:** Phase 4 executed — 5/5 plans committed, 90/90 tests pass. Milestone v1.0 complete.
+**Next:** Archive milestone or plan v2.

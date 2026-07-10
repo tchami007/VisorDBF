@@ -17,11 +17,10 @@ public partial class App : Application
         var encodingDetector = new EncodingDetectionService();
         var dbfReader = new DbfReaderService();
         var txtExportService = new TxtExportService();
-        var sqlExportService = new SqlExportService();
         var columnFormatService = new ColumnFormatService();
         var sybaseExportService = new SybaseExportService();
 
-        var mainViewModel = new MainViewModel(dbfReader, encodingDetector, txtExportService, sqlExportService, sybaseExportService, columnFormatService);
+        var mainViewModel = new MainViewModel(dbfReader, encodingDetector, txtExportService, sybaseExportService, columnFormatService);
 
         var mainWindow = new MainWindow();
         mainWindow.DataContext = mainViewModel;

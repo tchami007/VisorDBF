@@ -53,8 +53,6 @@
                 <MenuItem Header="Exportar a TXT..."
                           Command="{Binding ExportCommand}"
                           InputGestureText="Ctrl+E"/>
-                <MenuItem Header="Exportar a SQL..."
-                          Command="{Binding ExportToSqlCommand}"/>
                 <Separator/>
                 <MenuItem Header="Traspasar a Sybase..."
                           Command="{Binding TransferToSybaseCommand}"/>

@@ -1,5 +1,6 @@
+using System.Data.Odbc;
+using System.Windows;
 using System.Windows.Input;
-using AdoNetCore.AseClient;
 using VisorDBF.Core.Models;
 namespace VisorDBF.UI.ViewModels;
 
@@ -14,6 +15,7 @@ public class SybaseConnectionViewModel : ViewModelBase
     private string _testMessage = string.Empty;
     private bool _isTestSuccessful;
     private bool _isTesting;
+    private string _detailedError = string.Empty;
 
     public string Host
     {
@@ -85,6 +87,22 @@ public class SybaseConnectionViewModel : ViewModelBase
         private set => SetField(ref _isTesting, value);
     }
 
+    public string DetailedError
+    {
+        get => _detailedError;
+        private set
+        {
+            if (SetField(ref _detailedError, value))
+                OnPropertyChanged(nameof(HasDetailedError));
+        }
+    }
+
+    public bool HasDetailedError => !string.IsNullOrEmpty(DetailedError);
+
+    public string CopyDetailsText { get; private set; } = string.Empty;
+    public bool CanCopyDetails => !string.IsNullOrEmpty(CopyDetailsText);
+    public ICommand CopyDetailsCommand { get; }
+
     public string ConnectionString
     {
         get
@@ -92,7 +110,13 @@ public class SybaseConnectionViewModel : ViewModelBase
             if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Database)
                 || string.IsNullOrWhiteSpace(Username))
                 return string.Empty;
-            return $"Data Source={Host}:{Port};Database={Database};User Id={Username};Password=***;";
+            return
+                "DRIVER={Adaptive Server Enterprise};" +
+                $"Server={Host};" +
+                $"Port={Port};" +
+                $"Database={Database};" +
+                $"UID={Username};" +
+                "PWD=***;";
         }
     }
 
@@ -119,6 +143,11 @@ public class SybaseConnectionViewModel : ViewModelBase
 
         TestConnectionCommand = new RelayCommand(async _ => await TestConnectionAsync(), _ => !IsTesting);
         SaveCommand = new RelayCommand(_ => Save(), _ => BuildConfig().IsValid);
+        CopyDetailsCommand = new RelayCommand(_ =>
+        {
+            try { Clipboard.SetText(CopyDetailsText); }
+            catch { }
+        });
     }
 
     private async Task TestConnectionAsync()
@@ -127,12 +156,18 @@ public class SybaseConnectionViewModel : ViewModelBase
         TestMessage = "Probando conexion...";
         IsTestSuccessful = false;
 
+        var config = BuildConfig();
         try
         {
-            var config = BuildConfig();
-            var cs = $"Data Source={config.Host}:{config.Port};Database={config.Database};User Id={config.Username};Password={config.Password};";
+            var cs =
+                "DRIVER={Adaptive Server Enterprise};" +
+                $"Server={config.Host};" +
+                $"Port={config.Port};" +
+                $"Database={config.Database};" +
+                $"UID={config.Username};" +
+                $"PWD={config.Password};";
 
-            await using var connection = new AseConnection(cs);
+            await using var connection = new OdbcConnection(cs);
             await connection.OpenAsync();
 
             IsTestSuccessful = true;
@@ -142,6 +177,17 @@ public class SybaseConnectionViewModel : ViewModelBase
         {
             IsTestSuccessful = false;
             TestMessage = $"Error: {ex.Message}";
+            DetailedError = ex.ToString();
+            var masked =
+                "DRIVER={Adaptive Server Enterprise};" +
+                $"Server={config.Host};" +
+                $"Port={config.Port};" +
+                $"Database={config.Database};" +
+                $"UID={config.Username};" +
+                "PWD=***;";
+            CopyDetailsText = $"ConnectionString:{Environment.NewLine}{masked}{Environment.NewLine}{Environment.NewLine}Error:{Environment.NewLine}{DetailedError}";
+            OnPropertyChanged(nameof(CopyDetailsText));
+            OnPropertyChanged(nameof(CanCopyDetails));
         }
         finally
         {

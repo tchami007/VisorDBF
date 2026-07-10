@@ -1,0 +1,5 @@
+Compila la aplicación VisorDBF para llevarla a una máquina con .NET 10. Publica en modo self-contained para win-x64 así no necesito modificar los .csproj ni instalar nada en el destino:
+
+dotnet publish src\VisorDBF.UI -c Release -r win-x64 --self-contained true
+
+Luego dime la ruta del output para copiar la carpeta publish\ al otro equipo.

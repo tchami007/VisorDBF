@@ -9,4 +9,9 @@ public interface ISybaseExportService
         SybaseConnectionConfig config,
         IProgress<int> progress,
         CancellationToken cancellationToken);
+
+    Task<bool> ProbeFirstRecordAsync(
+        DbfFile file,
+        SybaseConnectionConfig config,
+        CancellationToken cancellationToken);
 }

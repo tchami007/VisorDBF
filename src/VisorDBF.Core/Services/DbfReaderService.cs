@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using VisorDBF.Core.Exceptions;
 using VisorDBF.Core.Models;
@@ -5,7 +6,7 @@ using VisorDBF.Core.Models;
 namespace VisorDBF.Core.Services;
 
 /// <summary>
-/// Lee archivos DBF completos en memoria usando DbfDataReader.
+/// Lee archivos DBF completos en memoria.
 /// Implementa D-04: carga completa en memoria al abrir el archivo.
 /// Implementa D-06: signature Task&lt;DbfFile&gt; ReadAsync(string, Encoding, CancellationToken).
 /// </summary>
@@ -60,62 +61,43 @@ public class DbfReaderService : IDbfReaderService
     }
 
     /// <summary>
-    /// Lee los campos y registros del DBF usando DbfDataReader.
-    /// Ejecutado en un Task.Run para no bloquear el hilo de UI.
+    /// Lee campos y registros directamente desde los bytes del archivo DBF.
+    /// No utiliza DbfDataReader porque su DbfValueInt no maneja valores
+    /// numericos grandes (> int.MaxValue) en campos N con DecimalCount=0.
     /// </summary>
     private static (List<DbfField> fields, List<Models.DbfRecord> records) ReadDbfData(
         string filePath,
         Encoding encoding,
         CancellationToken cancellationToken)
     {
-        using var dbfReader = new DbfDataReader.DbfDataReader(filePath, encoding);
+        using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-        // Construir DbfField desde las columnas del DbfTable
-        var columns = dbfReader.DbfTable.Columns;
-        var fields = columns.Select(col => new DbfField(
-            Name: col.Name,
-            Type: MapColumnType(col.ColumnType),
-            Length: col.Length,
-            DecimalCount: col.DecimalCount,
-            OrdinalPosition: col.Index
-        )).ToList();
+        var header = new byte[32];
+        fs.Read(header, 0, 32);
 
-        // Iterar registros
+        int headerLen = BitConverter.ToInt16(header, 8);
+        int recLen = BitConverter.ToInt16(header, 10);
+
+        var fields = ReadFieldDefinitions(fs, encoding);
         var records = new List<Models.DbfRecord>();
-        int rowIndex = 0;
 
-        while (dbfReader.Read())
+        var recordBuffer = new byte[recLen];
+        fs.Seek(headerLen, SeekOrigin.Begin);
+
+        int rowIndex = 0;
+        while (fs.Read(recordBuffer, 0, recLen) == recLen)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            bool isDeleted = dbfReader.DbfRecord.IsDeleted;
+            bool isDeleted = recordBuffer[0] == 0x2A;
             var values = new Dictionary<string, object?>(fields.Count);
 
+            int offset = 1;
             for (int i = 0; i < fields.Count; i++)
             {
-                object? value;
-                if (dbfReader.IsDBNull(i))
-                {
-                    value = null;
-                }
-                else if (fields[i].Type == DbfFieldType.Memo)
-                {
-                    // MEMO: capturar excepcion si el archivo .FPT/.DBT no existe
-                    try
-                    {
-                        value = dbfReader.GetValue(i);
-                    }
-                    catch (Exception)
-                    {
-                        value = string.Empty;
-                    }
-                }
-                else
-                {
-                    value = dbfReader.GetValue(i);
-                }
-
-                values[fields[i].Name] = value;
+                var field = fields[i];
+                values[field.Name] = ParseFieldValue(recordBuffer, offset, field, encoding, filePath);
+                offset += field.Length;
             }
 
             records.Add(new Models.DbfRecord(rowIndex, isDeleted, values));
@@ -123,6 +105,201 @@ public class DbfReaderService : IDbfReaderService
         }
 
         return (fields, records);
+    }
+
+    /// <summary>
+    /// Lee las definiciones de los campos desde el header del DBF.
+    /// </summary>
+    private static List<DbfField> ReadFieldDefinitions(FileStream fs, Encoding encoding)
+    {
+        var header = new byte[32];
+        fs.Seek(0, SeekOrigin.Begin);
+        fs.Read(header, 0, 32);
+
+        int headerLen = BitConverter.ToInt16(header, 8);
+        int numFields = (headerLen - 32 - 1) / 32;
+
+        var fields = new List<DbfField>(numFields);
+
+        for (int i = 0; i < numFields; i++)
+        {
+            byte[] fieldDef = new byte[32];
+            fs.Seek(32 + i * 32, SeekOrigin.Begin);
+            fs.Read(fieldDef, 0, 32);
+
+            string rawName = encoding.GetString(fieldDef, 0, 11);
+            string name = rawName.TrimEnd('\0');
+            if (string.IsNullOrEmpty(name))
+                continue;
+
+            char rawType = (char)fieldDef[11];
+            int length = fieldDef[16];
+            int decimalCount = fieldDef[17];
+
+            var type = rawType switch
+            {
+                'C' or 'c' => DbfFieldType.Character,
+                'N' or 'n' => DbfFieldType.Numeric,
+                'F' or 'f' => DbfFieldType.Float,
+                'D' or 'd' => DbfFieldType.Date,
+                'T' or 't' => DbfFieldType.DateTime,
+                'L' or 'l' => DbfFieldType.Logical,
+                'M' or 'm' => DbfFieldType.Memo,
+                'I' or 'i' => DbfFieldType.Integer,
+                'B' or 'b' => DbfFieldType.Float,
+                _ => DbfFieldType.Unknown
+            };
+
+            fields.Add(new DbfField(name, type, length, decimalCount, i));
+        }
+
+        return fields;
+    }
+
+    /// <summary>
+    /// Parsea el valor de un campo desde los bytes del registro.
+    /// </summary>
+    private static object? ParseFieldValue(
+        byte[] recordBuffer, int offset, DbfField field, Encoding encoding, string filePath)
+    {
+        int length = field.Length;
+        if (offset + length > recordBuffer.Length)
+            return null;
+
+        switch (field.Type)
+        {
+            case DbfFieldType.Numeric:
+                return ParseNumericValue(recordBuffer, offset, length, field.DecimalCount);
+
+            case DbfFieldType.Float:
+                return ParseNumericValue(recordBuffer, offset, length, field.DecimalCount);
+
+            case DbfFieldType.Integer:
+                return ParseNumericValue(recordBuffer, offset, length, 0);
+
+            case DbfFieldType.Character:
+            {
+                string raw = encoding.GetString(recordBuffer, offset, length);
+                int nullIdx = raw.IndexOf('\0');
+                if (nullIdx >= 0)
+                    raw = raw[..nullIdx];
+                return raw;
+            }
+
+            case DbfFieldType.Date:
+                return ParseDateValue(recordBuffer, offset, length);
+
+            case DbfFieldType.DateTime:
+                return ParseDateValue(recordBuffer, offset, length);
+
+            case DbfFieldType.Logical:
+            {
+                if (length < 1) return null;
+                char c = (char)recordBuffer[offset];
+                return c is 'Y' or 'y' or 'T' or 't';
+            }
+
+            case DbfFieldType.Memo:
+            {
+                string raw = encoding.GetString(recordBuffer, offset, length).TrimEnd('\0');
+                return raw;
+            }
+
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// Parsea un valor numerico desde ASCII.
+    /// Usa decimal/long segun corresponda para evitar perdida de precision.
+    /// </summary>
+    private static object? ParseNumericValue(byte[] buffer, int offset, int length, int decimalCount)
+    {
+        int end = offset + length;
+        while (end > offset && buffer[end - 1] == ' ')
+            end--;
+
+        if (end <= offset)
+            return null;
+
+        // Construir string con los bytes significativos
+        int start = offset;
+        while (start < end && buffer[start] == ' ')
+            start++;
+
+        if (start >= end)
+            return null;
+
+        // Si tiene decimales, leer como decimal
+        if (decimalCount > 0)
+        {
+            // Construir string incluyendo punto decimal si es necesario
+            int rawLength = end - start;
+            Span<char> chars = stackalloc char[rawLength];
+            for (int i = 0; i < rawLength; i++)
+                chars[i] = (char)buffer[start + i];
+
+            string numStr = new(chars);
+
+            if (decimal.TryParse(numStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal decVal))
+                return decVal;
+
+            return null;
+        }
+
+        // Sin decimales: intentar como long primero, luego decimal
+        int sigLength = end - start;
+        Span<char> chars2 = stackalloc char[sigLength];
+        for (int i = 0; i < sigLength; i++)
+            chars2[i] = (char)buffer[start + i];
+
+        string intStr = new(chars2);
+
+        if (long.TryParse(intStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out long longVal))
+            return longVal;
+
+        if (decimal.TryParse(intStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal decVal2))
+            return decVal2;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Parsea una fecha desde formato DBF (YYYYMMDD).
+    /// </summary>
+    private static object? ParseDateValue(byte[] buffer, int offset, int length)
+    {
+        if (length < 8) return null;
+
+        // Verificar si es todo espacios o ceros (fecha nula)
+        bool allSpaces = true;
+        for (int i = 0; i < 8 && offset + i < buffer.Length; i++)
+        {
+            if (buffer[offset + i] != ' ' && buffer[offset + i] != '0')
+            {
+                allSpaces = false;
+                break;
+            }
+        }
+        if (allSpaces)
+            return null;
+
+        try
+        {
+            int year = (buffer[offset] - '0') * 1000 + (buffer[offset + 1] - '0') * 100
+                     + (buffer[offset + 2] - '0') * 10 + (buffer[offset + 3] - '0');
+            int month = (buffer[offset + 4] - '0') * 10 + (buffer[offset + 5] - '0');
+            int day = (buffer[offset + 6] - '0') * 10 + (buffer[offset + 7] - '0');
+
+            if (month >= 1 && month <= 12 && day >= 1 && day <= 31)
+                return new DateTime(year, month, day);
+        }
+        catch
+        {
+        }
+
+        return null;
     }
 
     /// <summary>

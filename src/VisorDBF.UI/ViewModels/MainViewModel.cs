@@ -15,7 +15,6 @@ public class MainViewModel : ViewModelBase
     private readonly IDbfReaderService _dbfReaderService;
     private readonly IEncodingDetectionService _encodingDetectionService;
     private readonly IExportService _exportService;
-    private readonly IExportService _sqlExportService;
     private readonly ISybaseExportService _sybaseExportService;
     private readonly IColumnFormatService _columnFormatService;
     private readonly ISettingsService _settingsService;
@@ -167,7 +166,6 @@ public class MainViewModel : ViewModelBase
     public ICommand ChangeEncodingCommand { get; }
     public ICommand OpenExportConfigCommand { get; }
     public ICommand ExportCommand { get; }
-    public ICommand ExportToSqlCommand { get; }
     public ICommand CancelExportCommand { get; }
     public ICommand OpenColumnFormatsCommand { get; }
     public ICommand ToggleFormatsCommand { get; }
@@ -179,7 +177,6 @@ public class MainViewModel : ViewModelBase
         IDbfReaderService dbfReaderService,
         IEncodingDetectionService encodingDetectionService,
         IExportService exportService,
-        IExportService sqlExportService,
         ISybaseExportService sybaseExportService,
         IColumnFormatService columnFormatService,
         ISettingsService? settingsService = null,
@@ -188,7 +185,6 @@ public class MainViewModel : ViewModelBase
         _dbfReaderService = dbfReaderService ?? throw new ArgumentNullException(nameof(dbfReaderService));
         _encodingDetectionService = encodingDetectionService ?? throw new ArgumentNullException(nameof(encodingDetectionService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
-        _sqlExportService = sqlExportService ?? throw new ArgumentNullException(nameof(sqlExportService));
         _sybaseExportService = sybaseExportService ?? throw new ArgumentNullException(nameof(sybaseExportService));
         _columnFormatService = columnFormatService ?? throw new ArgumentNullException(nameof(columnFormatService));
         _settingsService = settingsService ?? new JsonSettingsService();
@@ -207,6 +203,7 @@ public class MainViewModel : ViewModelBase
         }
 
         _recentFiles = _appSettings.RecentFiles ?? new List<RecentFileEntry>();
+        _sybaseConfig = _appSettings.SybaseConfig;
 
         OpenFileCommand = new RelayCommand(async _ => await OpenFileAsync(), _ => !IsLoading);
         OpenRecentFileCommand = new RelayCommand(
@@ -219,7 +216,6 @@ public class MainViewModel : ViewModelBase
             async _ => await OpenExportConfigAsync(),
             _ => !IsLoading);
         ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => CanExport);
-        ExportToSqlCommand = new RelayCommand(async _ => await ExportToSqlAsync(), _ => CanExport);
         CancelExportCommand = new RelayCommand(_ => CancelExport(), _ => IsExporting);
         OpenColumnFormatsCommand = new RelayCommand(
             async _ => await OpenColumnFormatsAsync(),
@@ -478,89 +474,6 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private async Task ExportToSqlAsync()
-    {
-        if (CurrentFile == null) return;
-
-        var saveDialog = new SaveFileDialog
-        {
-            Title = "Guardar archivo SQL",
-            Filter = "Archivos SQL (*.sql)|*.sql|Todos los archivos (*.*)|*.*",
-            DefaultExt = ".sql",
-            InitialDirectory = Path.GetDirectoryName(CurrentFile.FilePath),
-            FileName = Path.GetFileNameWithoutExtension(CurrentFile.FilePath) + ".sql"
-        };
-
-        if (saveDialog.ShowDialog() != true) return;
-
-        _exportCts = new CancellationTokenSource();
-        var progressVm = new ExportProgressDialogViewModel(
-            CurrentFile.RecordCount, saveDialog.FileName, () => _exportCts?.Cancel());
-        var progressDialog = new ExportProgressDialog { DataContext = progressVm };
-        progressDialog.Owner = Application.Current.MainWindow;
-
-        var syncContext = SynchronizationContext.Current;
-        var totalRecords = CurrentFile.RecordCount;
-
-        var progress = new Progress<int>(processed =>
-        {
-            progressVm.ProcessedRecords = processed;
-            ExportProgressPercent = (double)processed / totalRecords * 100;
-        });
-
-        try
-        {
-            IsExporting = true;
-            ExportProgressPercent = 0;
-
-            var exportTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await _sqlExportService.ExportAsync(
-                        CurrentFile,
-                        CurrentExportConfig,
-                        saveDialog.FileName,
-                        progress,
-                        _exportCts.Token);
-
-                    syncContext?.Post(_ => progressVm.IsComplete = true, null);
-                }
-                catch (OperationCanceledException)
-                {
-                    syncContext?.Post(_ => progressVm.IsCancelled = true, null);
-                    throw;
-                }
-            });
-
-            progressDialog.ShowDialog();
-            await exportTask;
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        catch (ExportException ex)
-        {
-            MessageBox.Show(ex.Message, "Error de exportacion SQL",
-                MessageBoxButton.OK, MessageBoxImage.Error);
-            if (progressDialog.IsVisible)
-                progressDialog.Close();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Se produjo un error durante la exportacion SQL. El archivo parcial fue eliminado.\n\n{ex.Message}",
-                "Error de exportacion SQL", MessageBoxButton.OK, MessageBoxImage.Error);
-            if (progressDialog.IsVisible)
-                progressDialog.Close();
-        }
-        finally
-        {
-            IsExporting = false;
-            _exportCts?.Dispose();
-            _exportCts = null;
-        }
-    }
-
     private async Task ConfigureSybaseAsync()
     {
         var configVm = new SybaseConnectionViewModel(
@@ -568,6 +481,7 @@ public class MainViewModel : ViewModelBase
             result =>
             {
                 SybaseConfig = result;
+                SaveSettings();
                 CommandManager.InvalidateRequerySuggested();
             });
 
@@ -726,7 +640,8 @@ public class MainViewModel : ViewModelBase
         {
             DefaultExportConfig = CurrentExportConfig,
             LastProfileName = ActiveProfileName,
-            RecentFiles = RecentFiles
+            RecentFiles = RecentFiles,
+            SybaseConfig = _sybaseConfig?.WithoutPassword()
         };
 
         _settingsService.Save(_appSettings);
@@ -745,7 +660,8 @@ public class MainViewModel : ViewModelBase
             LastProfileName = ActiveProfileName,
             Profiles = _appSettings.Profiles,
             RecentFiles = _appSettings.RecentFiles,
-            WindowState = _appSettings.WindowState
+            WindowState = _appSettings.WindowState,
+            SybaseConfig = _sybaseConfig?.WithoutPassword()
         };
 
         _settingsService.Save(_appSettings);
