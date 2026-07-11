@@ -1,6 +1,7 @@
+# ─── Planning / Docs (force-added archives are tracked; new files ignored) ───
 .planning/
 
-# .NET
+# ─── .NET build artifacts ───
 bin/
 obj/
 *.user
@@ -8,10 +9,47 @@ obj/
 *.suo
 TestResults/
 publish/
+*.cache
+*.dbmdl
+*.jfm
 
-# NuGet
+# ─── NuGet ───
 *.nupkg
 packages/
+*.nuget.props
+*.nuget.targets
 
-# Export output
+# ─── Data files (DBF samples, export output) ───
 data/*.txt
+data/*.dbf
+data/*.DBF
+
+# ─── Credentials & secrets ───
+*.key
+*.pem
+*.pfx
+*.cert
+secrets/
+*.env
+.env.*
+appsettings*.Secret.*
+appsettings*.Local.*
+connectionStrings.config
+
+# ─── Sensitive documentation ───
+**/credentials*
+**/passwords*
+**/secrets*
+docs/*PASSWORD*
+docs/*SECRET*
+docs/*LOGIN*
+*connection-string*
+*connstr*
+
+# ─── IDE & OS files ───
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.tmp
