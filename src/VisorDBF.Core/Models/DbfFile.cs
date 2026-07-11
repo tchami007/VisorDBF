@@ -6,7 +6,7 @@ namespace VisorDBF.Core.Models;
 /// Representa un archivo DBF cargado en memoria.
 /// Es el contrato central entre los servicios de Core y la UI.
 /// </summary>
-public class DbfFile
+public sealed class DbfFile
 {
     public string FilePath { get; init; } = string.Empty;
     public string FileName => Path.GetFileName(FilePath);

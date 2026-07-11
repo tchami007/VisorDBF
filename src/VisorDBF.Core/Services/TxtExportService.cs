@@ -4,7 +4,7 @@ using VisorDBF.Core.Exceptions;
 using VisorDBF.Core.Models;
 namespace VisorDBF.Core.Services;
 
-public class TxtExportService : IExportService
+public sealed class TxtExportService : IExportService
 {
     private readonly IColumnFormatService? _formatService;
 
@@ -83,13 +83,18 @@ public class TxtExportService : IExportService
     internal static string BuildLine(ExportLineContext context)
     {
         var numberCulture = context.NumberCulture ?? GetNumberCulture(context.Config.DecimalSeparator);
-        var values = context.Fields.Select(f => FormatValue(
-            context.Record.Values.GetValueOrDefault(f.Name),
-            f.Name,
-            context.ColumnFormats,
-            context.FormatService,
-            numberCulture));
-        var line = string.Join(context.Config.ColumnSeparator, values);
+        var sb = new StringBuilder();
+        for (int i = 0; i < context.Fields.Count; i++)
+        {
+            if (i > 0) sb.Append(context.Config.ColumnSeparator);
+            sb.Append(FormatValue(
+                context.Record.Values.GetValueOrDefault(context.Fields[i].Name),
+                context.Fields[i].Name,
+                context.ColumnFormats,
+                context.FormatService,
+                numberCulture));
+        }
+        var line = sb.ToString();
         if (!string.IsNullOrEmpty(context.Config.RowEndDelimiter))
             line += context.Config.RowEndDelimiter;
         return line;

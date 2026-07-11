@@ -4,7 +4,7 @@ using System.Windows.Input;
 using VisorDBF.Core.Models;
 namespace VisorDBF.UI.ViewModels;
 
-public class SybaseConnectionViewModel : ViewModelBase
+public sealed class SybaseConnectionViewModel : ViewModelBase
 {
     private string _host = string.Empty;
     private int _port = 5000;
@@ -110,13 +110,7 @@ public class SybaseConnectionViewModel : ViewModelBase
             if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Database)
                 || string.IsNullOrWhiteSpace(Username))
                 return string.Empty;
-            return
-                "DRIVER={Adaptive Server Enterprise};" +
-                $"Server={Host};" +
-                $"Port={Port};" +
-                $"Database={Database};" +
-                $"UID={Username};" +
-                "PWD=***;";
+            return BuildConfig().BuildConnectionString(maskPassword: true);
         }
     }
 
@@ -146,7 +140,7 @@ public class SybaseConnectionViewModel : ViewModelBase
         CopyDetailsCommand = new RelayCommand(_ =>
         {
             try { Clipboard.SetText(CopyDetailsText); }
-            catch { }
+            catch { /* Ignored: clipboard may not be available in all contexts */ }
         });
     }
 
@@ -159,13 +153,7 @@ public class SybaseConnectionViewModel : ViewModelBase
         var config = BuildConfig();
         try
         {
-            var cs =
-                "DRIVER={Adaptive Server Enterprise};" +
-                $"Server={config.Host};" +
-                $"Port={config.Port};" +
-                $"Database={config.Database};" +
-                $"UID={config.Username};" +
-                $"PWD={config.Password};";
+            var cs = config.BuildConnectionString();
 
             await using var connection = new OdbcConnection(cs);
             await connection.OpenAsync();
@@ -178,13 +166,7 @@ public class SybaseConnectionViewModel : ViewModelBase
             IsTestSuccessful = false;
             TestMessage = $"Error: {ex.Message}";
             DetailedError = ex.ToString();
-            var masked =
-                "DRIVER={Adaptive Server Enterprise};" +
-                $"Server={config.Host};" +
-                $"Port={config.Port};" +
-                $"Database={config.Database};" +
-                $"UID={config.Username};" +
-                "PWD=***;";
+            var masked = config.BuildConnectionString(maskPassword: true);
             CopyDetailsText = $"ConnectionString:{Environment.NewLine}{masked}{Environment.NewLine}{Environment.NewLine}Error:{Environment.NewLine}{DetailedError}";
             OnPropertyChanged(nameof(CopyDetailsText));
             OnPropertyChanged(nameof(CanCopyDetails));

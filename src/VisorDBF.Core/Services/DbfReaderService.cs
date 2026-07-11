@@ -10,7 +10,7 @@ namespace VisorDBF.Core.Services;
 /// Implementa D-04: carga completa en memoria al abrir el archivo.
 /// Implementa D-06: signature Task&lt;DbfFile&gt; ReadAsync(string, Encoding, CancellationToken).
 /// </summary>
-public class DbfReaderService : IDbfReaderService
+public sealed class DbfReaderService : IDbfReaderService
 {
     /// <inheritdoc/>
     public async Task<DbfFile> ReadAsync(
@@ -26,8 +26,6 @@ public class DbfReaderService : IDbfReaderService
 
         try
         {
-            // Leer header manualmente para LanguageDriverId y LastModifiedDate
-            // (DbfDataReader no expone estos via API publica)
             var (languageDriverId, lastModifiedDate) = ReadHeaderInfo(filePath);
 
             // Construir campos y registros en background thread para no bloquear UI
@@ -62,8 +60,6 @@ public class DbfReaderService : IDbfReaderService
 
     /// <summary>
     /// Lee campos y registros directamente desde los bytes del archivo DBF.
-    /// No utiliza DbfDataReader porque su DbfValueInt no maneja valores
-    /// numericos grandes (> int.MaxValue) en campos N con DecimalCount=0.
     /// </summary>
     private static (List<DbfField> fields, List<Models.DbfRecord> records) ReadDbfData(
         string filePath,
@@ -79,7 +75,8 @@ public class DbfReaderService : IDbfReaderService
         int recLen = BitConverter.ToInt16(header, 10);
 
         var fields = ReadFieldDefinitions(fs, encoding);
-        var records = new List<Models.DbfRecord>();
+        int recordCount = BitConverter.ToInt32(header, 4);
+        var records = new List<Models.DbfRecord>(recordCount);
 
         var recordBuffer = new byte[recLen];
         fs.Seek(headerLen, SeekOrigin.Begin);
@@ -271,10 +268,10 @@ public class DbfReaderService : IDbfReaderService
     private static object? ParseDateValue(byte[] buffer, int offset, int length)
     {
         if (length < 8) return null;
+        if (offset + 8 > buffer.Length) return null;
 
-        // Verificar si es todo espacios o ceros (fecha nula)
         bool allSpaces = true;
-        for (int i = 0; i < 8 && offset + i < buffer.Length; i++)
+        for (int i = 0; i < 8; i++)
         {
             if (buffer[offset + i] != ' ' && buffer[offset + i] != '0')
             {
@@ -285,19 +282,14 @@ public class DbfReaderService : IDbfReaderService
         if (allSpaces)
             return null;
 
-        try
-        {
-            int year = (buffer[offset] - '0') * 1000 + (buffer[offset + 1] - '0') * 100
-                     + (buffer[offset + 2] - '0') * 10 + (buffer[offset + 3] - '0');
-            int month = (buffer[offset + 4] - '0') * 10 + (buffer[offset + 5] - '0');
-            int day = (buffer[offset + 6] - '0') * 10 + (buffer[offset + 7] - '0');
+        Span<char> chars = stackalloc char[8];
+        for (int i = 0; i < 8; i++)
+            chars[i] = (char)buffer[offset + i];
 
-            if (month >= 1 && month <= 12 && day >= 1 && day <= 31)
-                return new DateTime(year, month, day);
-        }
-        catch
-        {
-        }
+        string dateStr = new(chars);
+
+        if (DateTime.TryParseExact(dateStr, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
+            return result;
 
         return null;
     }
@@ -338,20 +330,5 @@ public class DbfReaderService : IDbfReaderService
         return (languageDriverId, lastModified);
     }
 
-    /// <summary>
-    /// Mapea DbfColumnType al enum DbfFieldType del dominio.
-    /// </summary>
-    private static DbfFieldType MapColumnType(DbfDataReader.DbfColumnType columnType) => columnType switch
-    {
-        DbfDataReader.DbfColumnType.Character  => DbfFieldType.Character,
-        DbfDataReader.DbfColumnType.Number     => DbfFieldType.Numeric,
-        DbfDataReader.DbfColumnType.Float      => DbfFieldType.Float,
-        DbfDataReader.DbfColumnType.Date       => DbfFieldType.Date,
-        DbfDataReader.DbfColumnType.DateTime   => DbfFieldType.DateTime,
-        DbfDataReader.DbfColumnType.Boolean    => DbfFieldType.Logical,
-        DbfDataReader.DbfColumnType.Memo       => DbfFieldType.Memo,
-        DbfDataReader.DbfColumnType.Signedlong => DbfFieldType.Integer,
-        DbfDataReader.DbfColumnType.Double     => DbfFieldType.Float,
-        _                                      => DbfFieldType.Unknown
-    };
+
 }

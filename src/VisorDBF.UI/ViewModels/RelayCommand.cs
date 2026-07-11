@@ -2,14 +2,11 @@ using System.Windows.Input;
 
 namespace VisorDBF.UI.ViewModels;
 
-/// <summary>
-/// ICommand implementation using delegates. Uses CommandManager.RequerySuggested
-/// so CanExecute is re-evaluated on UI interactions automatically.
-/// </summary>
-public class RelayCommand : ICommand
+public sealed class RelayCommand : ICommand
 {
     private readonly Action<object?> _execute;
     private readonly Func<object?, bool>? _canExecute;
+    private event EventHandler? _canExecuteChanged;
 
     public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
     {
@@ -22,7 +19,13 @@ public class RelayCommand : ICommand
 
     public event EventHandler? CanExecuteChanged
     {
-        add => CommandManager.RequerySuggested += value;
-        remove => CommandManager.RequerySuggested -= value;
+        add => _canExecuteChanged += value;
+        remove => _canExecuteChanged -= value;
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        _canExecuteChanged?.Invoke(this, EventArgs.Empty);
+        CommandManager.InvalidateRequerySuggested();
     }
 }

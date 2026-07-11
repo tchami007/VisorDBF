@@ -15,4 +15,13 @@ public sealed record SybaseConnectionConfig
         && !string.IsNullOrWhiteSpace(TableName);
 
     public SybaseConnectionConfig WithoutPassword() => this with { Password = string.Empty };
+
+    public string BuildConnectionString(bool maskPassword = false) =>
+        "DRIVER={Adaptive Server Enterprise};" +
+        $"Server={Host};" +
+        $"Port={Port};" +
+        $"Database={Database};" +
+        $"UID={Username};" +
+        $"PWD={(maskPassword ? "***" : Password)};" +
+        "Connection Timeout=30;";
 }

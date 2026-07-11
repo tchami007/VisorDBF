@@ -11,7 +11,7 @@ using VisorDBF.UI.Views;
 
 namespace VisorDBF.UI.ViewModels;
 
-public class MainViewModel : ViewModelBase
+public sealed class MainViewModel : ViewModelBase
 {
     private readonly IDbfReaderService _dbfReaderService;
     private readonly IEncodingDetectionService _encodingDetectionService;

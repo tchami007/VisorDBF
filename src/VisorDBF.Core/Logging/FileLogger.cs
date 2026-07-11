@@ -50,5 +50,6 @@ public sealed class FileLogger : IDisposable
         {
             _writer.Dispose();
         }
+        GC.SuppressFinalize(this);
     }
 }

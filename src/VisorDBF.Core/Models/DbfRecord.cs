@@ -5,7 +5,7 @@ namespace VisorDBF.Core.Models;
 /// Implementada como class (mutable durante la carga desde DbfReaderService).
 /// Values usa el nombre del campo como key (case-sensitive, tal como viene del DBF).
 /// </summary>
-public class DbfRecord
+public sealed class DbfRecord
 {
     public Dictionary<string, object?> Values { get; init; } = new();
     public bool IsDeleted { get; init; }

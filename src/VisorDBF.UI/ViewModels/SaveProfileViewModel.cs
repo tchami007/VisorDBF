@@ -1,7 +1,7 @@
 using System.Windows.Input;
 namespace VisorDBF.UI.ViewModels;
 
-public class SaveProfileViewModel : ViewModelBase
+public sealed class SaveProfileViewModel : ViewModelBase
 {
     private string _profileName = string.Empty;
     private string? _errorMessage;

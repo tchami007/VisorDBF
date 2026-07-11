@@ -9,7 +9,7 @@ namespace VisorDBF.UI.ViewModels;
 /// Expone la lista de encodings disponibles, el encoding seleccionado,
 /// y una vista previa de los primeros 5 registros del archivo con el encoding activo.
 /// </summary>
-public class EncodingPickerViewModel : ViewModelBase
+public sealed class EncodingPickerViewModel : ViewModelBase
 {
     // Encodings comunes al inicio de la lista (segun D-12)
     private static readonly string[] PriorityEncodings = [
@@ -100,7 +100,6 @@ public class EncodingPickerViewModel : ViewModelBase
 
     private static IReadOnlyList<EncodingItem> BuildEncodingList()
     {
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var priority = PriorityEncodings
             .Select(name => TryGetEncoding(name))
             .OfType<Encoding>()

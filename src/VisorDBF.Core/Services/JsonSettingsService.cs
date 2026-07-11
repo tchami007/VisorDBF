@@ -89,7 +89,11 @@ public sealed class JsonSettingsService : ISettingsService
     private static string SanitizeFileName(string name)
     {
         var invalid = Path.GetInvalidFileNameChars();
-        return string.Concat(name.Select(c => invalid.Contains(c) ? '_' : c));
+        return string.Create(name.Length, name, (span, n) =>
+        {
+            for (int i = 0; i < n.Length; i++)
+                span[i] = Array.IndexOf(invalid, n[i]) >= 0 ? '_' : n[i];
+        });
     }
 
     private sealed class DoubleJsonConverter : JsonConverter<double>

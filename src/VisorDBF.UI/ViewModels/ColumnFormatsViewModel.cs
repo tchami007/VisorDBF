@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
@@ -7,13 +8,14 @@ namespace VisorDBF.UI.ViewModels;
 
 public sealed class ColumnFormatsViewModel : ViewModelBase
 {
-    private static readonly Dictionary<string, string[]> PresetFormats = new()
+    private static readonly FrozenDictionary<string, string[]> PresetFormats =
+        new Dictionary<string, string[]>
     {
         ["Date"] = ["dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "d MMM yyyy"],
         ["DateTime"] = ["dd/MM/yyyy HH:mm", "MM/dd/yyyy HH:mm", "yyyy-MM-dd HH:mm"],
         ["Numeric"] = ["N0", "N2", "C0", "C2", "P0", "P2"],
         ["Float"] = ["F0", "F2", "F4", "E2", "G", "N2"]
-    };
+    }.ToFrozenDictionary();
 
     private readonly IColumnFormatService _formatService;
     private readonly DbfRecord? _firstRecord;

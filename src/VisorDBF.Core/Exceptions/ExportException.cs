@@ -1,6 +1,6 @@
 namespace VisorDBF.Core.Exceptions;
 
-public class ExportException : Exception
+public sealed class ExportException : Exception
 {
     public string OutputPath { get; }
 

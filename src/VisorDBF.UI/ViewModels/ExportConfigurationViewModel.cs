@@ -5,7 +5,7 @@ using VisorDBF.Core.Models;
 using VisorDBF.UI.Views;
 namespace VisorDBF.UI.ViewModels;
 
-public class ExportConfigurationViewModel : ViewModelBase
+public sealed class ExportConfigurationViewModel : ViewModelBase
 {
     private static readonly string[] PriorityOutputEncodings = [
         "utf-8", "windows-1252", "iso-8859-1", "utf-16", "ibm850"
@@ -383,7 +383,6 @@ public class ExportConfigurationViewModel : ViewModelBase
 
     private static IReadOnlyList<EncodingItem> BuildEncodingList()
     {
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var priority = PriorityOutputEncodings
             .Select(name => TryGetEncoding(name))
             .OfType<Encoding>()

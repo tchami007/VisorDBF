@@ -1,6 +1,6 @@
 namespace VisorDBF.Core.Exceptions;
 
-public class UnknownEncodingException : Exception
+public sealed class UnknownEncodingException : Exception
 {
     public byte LanguageDriverId { get; }
     public string FilePath { get; }

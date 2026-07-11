@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 namespace VisorDBF.UI.Converters;
 
-public class ColumnFormatConverter : IValueConverter
+public sealed class ColumnFormatConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {

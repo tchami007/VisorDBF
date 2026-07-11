@@ -1,6 +1,6 @@
 namespace VisorDBF.Core.Exceptions;
 
-public class DbfReadException : Exception
+public sealed class DbfReadException : Exception
 {
     public string FilePath { get; }
 

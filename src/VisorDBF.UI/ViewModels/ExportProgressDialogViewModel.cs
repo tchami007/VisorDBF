@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Windows.Input;
 namespace VisorDBF.UI.ViewModels;
 
-public class ExportProgressDialogViewModel : ViewModelBase
+public sealed class ExportProgressDialogViewModel : ViewModelBase
 {
     private int _processedRecords;
     private bool _isComplete;

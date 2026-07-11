@@ -7,7 +7,7 @@ using VisorDBF.Core.Models;
 
 namespace VisorDBF.Core.Services;
 
-public class SybaseExportService : ISybaseExportService
+public sealed class SybaseExportService : ISybaseExportService
 {
     private const int BatchSize = 1000;
     private const int ConnectionTimeoutSec = 30;

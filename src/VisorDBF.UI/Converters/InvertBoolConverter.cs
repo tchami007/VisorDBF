@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 namespace VisorDBF.UI.Converters;
 
-public class InvertBoolConverter : IValueConverter
+public sealed class InvertBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is bool b ? !b : value;

@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace VisorDBF.UI.Converters;
 
-public class StringNotEmptyToVisibilityConverter : IValueConverter
+public sealed class StringNotEmptyToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {

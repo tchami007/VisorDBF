@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text;
 using VisorDBF.Core.Exceptions;
 
@@ -8,11 +9,12 @@ namespace VisorDBF.Core.Services;
 /// del header (byte en offset 0x1D) y mapeandolo a un System.Text.Encoding conocido.
 /// Referencia: docs/TECH.md §7.3
 /// </summary>
-public class EncodingDetectionService : IEncodingDetectionService
+public sealed class EncodingDetectionService : IEncodingDetectionService
 {
     // Tabla completa de Language Driver IDs → encoding name
     // Fuente: docs/TECH.md §7.3 + 01-RESEARCH.md (tabla extendida)
-    private static readonly Dictionary<byte, string> LanguageDriverMap = new()
+    private static readonly FrozenDictionary<byte, string> LanguageDriverMap =
+        new Dictionary<byte, string>
     {
         { 0x01, "IBM437" },
         { 0x02, "IBM850" },
@@ -65,7 +67,7 @@ public class EncodingDetectionService : IEncodingDetectionService
         { 0xCA, "windows-1254" },
         { 0xCB, "windows-1253" },
         { 0xCC, "windows-1257" },
-    };
+    }.ToFrozenDictionary();
 
     /// <inheritdoc/>
     public byte ReadLanguageDriverId(string filePath)
@@ -96,8 +98,6 @@ public class EncodingDetectionService : IEncodingDetectionService
         if (!LanguageDriverMap.TryGetValue(languageDriverId, out var encodingName))
             return null;
 
-        // Asegurarse de que el proveedor de code pages este registrado
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         return Encoding.GetEncoding(encodingName);
     }
 
