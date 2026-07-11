@@ -27,6 +27,15 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 **Codebase:** 102 files, ~9,244 LOC C#/XAML, 1,091 LOC tests, 90 tests
 **Tech stack:** .NET 8 LTS, WPF/MVVM, DbfDataReader, System.Text.Json, ODBC
 
+## Current Milestone: v1.1 — Mejoras Técnicas ✓ (shipped 2026-07-11)
+
+**Delivered (v1.1):**
+- 4 fases, 18 tareas completadas sobre la base v1.0
+- Correcciones críticas: memory leak en RelayCommand, empty catch silencioso, innerException preservation, case-sensitive Sybase lookup
+- Correcciones de media severidad: GC.SuppressFinalize, ProbeResult feedback, dead code removal (DbfDataReader), connection string unificada
+- Refactorización de diseño: SybaseExportService 837→296 líneas, MainViewModel 674→552, BuildConvertFunction en 11 métodos, ExportLineContext
+- Optimizaciones de rendimiento .NET: 21 clases selladas, BuildLine sin LINQ closure, FrozenDictionary, capacity hint, RegisterProvider redundante eliminado, SanitizeFileName optimizado
+
 ## Requirements
 
 ### Validated
@@ -45,10 +54,28 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 - ✓ Lista de archivos recientes con acceso rapido (15 max) — v1.0
 - ✓ Persistencia de posicion y tamano de ventana — v1.0
 - ✓ Traspaso directo a Sybase ASE via ODBC con probe y logging — v1.0
+- ✓ CRIT-01: Memory leak en RelayCommand — v1.1
+- ✓ CRIT-02: Empty catch silencioso en DbfReaderService — v1.1
+- ✓ CRIT-03: innerException al wrappear excepciones — v1.1
+- ✓ CRIT-04: Case-sensitive Sybase lookup — v1.1
+- ✓ MED-01: GC.SuppressFinalize en FileLogger — v1.1
+- ✓ MED-02: ProbeResult feedback al usuario — v1.1
+- ✓ MED-03: Dead code eliminado (DbfDataReader) — v1.1
+- ✓ MED-04: Connection string Sybase unificada — v1.1
+- ✓ REF-01: Extraer SybaseExportService (837→296 lines) — v1.1
+- ✓ REF-02: Extraer MainViewModel (674→552 lines) — v1.1
+- ✓ REF-03: BuildConvertFunction en 11 métodos — v1.1
+- ✓ REF-04: ExportLineContext para BuildLine — v1.1
+- ✓ PERF-01: 21 clases selladas — v1.1
+- ✓ PERF-02: BuildLine sin LINQ closure — v1.1
+- ✓ PERF-03: FrozenDictionary en mapas estáticos — v1.1
+- ✓ PERF-04: Capacity hint en DbfReaderService — v1.1
+- ✓ PERF-05: RegisterProvider redundante eliminado — v1.1
+- ✓ PERF-06: SanitizeFileName optimizado — v1.1
 
 ### Active
 
-(none — v2 requires fresh requirements)
+(Next milestone — no requirements defined yet)
 
 ### Out of Scope
 
@@ -63,6 +90,8 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 El formato DBF es ampliamente utilizado en sistemas legacy (Clipper, FoxPro, dBASE) que siguen generando archivos que deben ser procesados por sistemas modernos. Los usuarios necesitan una herramienta liviana, portable y sin dependencias que funcione sobre Windows sin configuracion adicional.
 
 **v1.0 shipped:** 4 dias de desarrollo, 16 feat commits, 90 tests, publicacion self-contained win-x64.
+
+**v1.1 shipped:** 2026-07-11 — 4 fases adicionales (5-8), 18 tareas de correcciones y optimizaciones. 0 regresiones, 90 tests siguen pasando. Codebase: ~9,500 LOC C#/XAML, 1,091 LOC tests.
 
 El proyecto cuenta con documentacion:
 - `docs/PRD.md` — Product Requirements Document con 8 RF y 6 RNF
@@ -95,6 +124,23 @@ El proyecto cuenta con documentacion:
 | CurrentCulture en grilla, InvariantCulture en exportacion | D-08: grid muestra formato local, export produce datos portables | ✓ Validated |
 | SybaseConfig sin password en persistencia | Seguridad por diseno — password se ingresa cada sesion | ✓ Validated |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
 
-*Last updated: 2026-07-10 after v1.0 milestone*
+*Last updated: 2026-07-11 after v1.1 milestone shipped*
