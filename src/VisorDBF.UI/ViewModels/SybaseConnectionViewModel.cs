@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Data.Odbc;
 using System.Windows;
 using System.Windows.Input;
@@ -16,6 +17,13 @@ public sealed class SybaseConnectionViewModel : ViewModelBase
     private bool _isTestSuccessful;
     private bool _isTesting;
     private string _detailedError = string.Empty;
+    private ObservableCollection<ExtraColumnEntryViewModel> _extraColumns = [];
+
+    public ObservableCollection<ExtraColumnEntryViewModel> ExtraColumns
+    {
+        get => _extraColumns;
+        set => SetField(ref _extraColumns, value);
+    }
 
     public string Host
     {
@@ -116,6 +124,8 @@ public sealed class SybaseConnectionViewModel : ViewModelBase
 
     public ICommand TestConnectionCommand { get; }
     public ICommand SaveCommand { get; }
+    public ICommand AddExtraColumnCommand { get; }
+    public ICommand RemoveExtraColumnCommand { get; }
 
     private readonly Action<SybaseConnectionConfig> _saveAction;
 
@@ -133,10 +143,32 @@ public sealed class SybaseConnectionViewModel : ViewModelBase
             _username = current.Username;
             _password = current.Password;
             _tableName = current.TableName;
+
+            if (current.ExtraColumns is { Count: > 0 })
+            {
+                foreach (var ec in current.ExtraColumns)
+                {
+                    _extraColumns.Add(new ExtraColumnEntryViewModel
+                    {
+                        ColumnName = ec.ColumnName,
+                        Type = ec.Type,
+                        RawValue = ec.RawValue
+                    });
+                }
+            }
         }
 
         TestConnectionCommand = new RelayCommand(async _ => await TestConnectionAsync(), _ => !IsTesting);
         SaveCommand = new RelayCommand(_ => Save(), _ => BuildConfig().IsValid);
+        AddExtraColumnCommand = new RelayCommand(_ =>
+        {
+            ExtraColumns.Add(new ExtraColumnEntryViewModel());
+        });
+        RemoveExtraColumnCommand = new RelayCommand(param =>
+        {
+            if (param is ExtraColumnEntryViewModel vm)
+                ExtraColumns.Remove(vm);
+        });
         CopyDetailsCommand = new RelayCommand(_ =>
         {
             try { Clipboard.SetText(CopyDetailsText); }
@@ -186,7 +218,13 @@ public sealed class SybaseConnectionViewModel : ViewModelBase
             Database = Database,
             Username = Username,
             Password = Password,
-            TableName = TableName
+            TableName = TableName,
+            ExtraColumns = ExtraColumns.Select(e => new ExtraColumnConfig
+            {
+                ColumnName = e.ColumnName,
+                Type = e.Type,
+                RawValue = e.RawValue
+            }).ToList()
         };
     }
 

@@ -8,6 +8,7 @@ public sealed record SybaseConnectionConfig
     public string Username { get; init; } = string.Empty;
     public string Password { get; init; } = string.Empty;
     public string TableName { get; init; } = string.Empty;
+    public List<ExtraColumnConfig> ExtraColumns { get; init; } = [];
     public bool IsValid => !string.IsNullOrWhiteSpace(Host)
         && Port > 0
         && !string.IsNullOrWhiteSpace(Database)

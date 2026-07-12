@@ -5,6 +5,8 @@ namespace VisorDBF.UI.Views;
 
 public partial class SybaseConnectionDialog : Window
 {
+    private bool _isSyncing;
+
     public SybaseConnectionDialog()
     {
         InitializeComponent();
@@ -16,10 +18,21 @@ public partial class SybaseConnectionDialog : Window
         if (DataContext is SybaseConnectionViewModel vm)
         {
             PasswordBox.Password = vm.Password;
+            PasswordBox.PasswordChanged += (_, _) =>
+            {
+                if (_isSyncing) return;
+                _isSyncing = true;
+                vm.SetPasswordFromDialog(PasswordBox.Password);
+                _isSyncing = false;
+            };
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(SybaseConnectionViewModel.Password))
-                    PasswordBox.Password = vm.Password;
+                if (args.PropertyName != nameof(SybaseConnectionViewModel.Password))
+                    return;
+                if (_isSyncing) return;
+                _isSyncing = true;
+                PasswordBox.Password = vm.Password;
+                _isSyncing = false;
             };
         }
     }

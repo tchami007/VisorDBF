@@ -126,6 +126,8 @@ public sealed class SybaseProbeService
         try
         {
             var columns = await _columnMappingService.LoadColumnTypesAsync(connection, config.TableName, file.Fields, log, cancellationToken);
+            var extraInfos = SybaseExportService.CreateExtraColumnInfos(config.ExtraColumns);
+            var allColumns = columns.Concat(extraInfos).ToList();
 
             var first = file.Records.FirstOrDefault(r => !r.IsDeleted);
             if (first == null)
@@ -135,7 +137,12 @@ public sealed class SybaseProbeService
             }
 
             log.WriteLine("Probing conversions against Sybase with first record...");
-            await ProbeConversionsViaSybaseAsync(connection, columns, first, log, cancellationToken);
+            if (extraInfos.Count > 0)
+            {
+                log.WriteLine($"Extra columns: {string.Join(", ", config.ExtraColumns.Select(e => $"{e.ColumnName} ({e.Type}) = '{e.RawValue}'"))}");
+            }
+
+            await ProbeConversionsViaSybaseAsync(connection, allColumns, first, log, cancellationToken);
             log.WriteLine("All Sybase conversions passed");
             return new ProbeResult(true, null);
         }

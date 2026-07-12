@@ -27,14 +27,15 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 **Codebase:** 102 files, ~9,244 LOC C#/XAML, 1,091 LOC tests, 90 tests
 **Tech stack:** .NET 8 LTS, WPF/MVVM, DbfDataReader, System.Text.Json, ODBC
 
-## Current Milestone: v1.1 — Mejoras Técnicas ✓ (shipped 2026-07-11)
+## Current Milestone: v1.2 — Columnas Personalizadas en Traspaso Sybase
 
-**Delivered (v1.1):**
-- 4 fases, 18 tareas completadas sobre la base v1.0
-- Correcciones críticas: memory leak en RelayCommand, empty catch silencioso, innerException preservation, case-sensitive Sybase lookup
-- Correcciones de media severidad: GC.SuppressFinalize, ProbeResult feedback, dead code removal (DbfDataReader), connection string unificada
-- Refactorización de diseño: SybaseExportService 837→296 líneas, MainViewModel 674→552, BuildConvertFunction en 11 métodos, ExportLineContext
-- Optimizaciones de rendimiento .NET: 21 clases selladas, BuildLine sin LINQ closure, FrozenDictionary, capacity hint, RegisterProvider redundante eliminado, SanitizeFileName optimizado
+**Goal:** Permitir al usuario configurar columnas adicionales (nombre, tipo datetime/integer, valor fijo) que se inyectan en cada INSERT al destino Sybase, más ventana Acerca De.
+
+**Target features:**
+- Configuración de columnas adicionales con nombre, tipo y valor en UI de traspaso Sybase
+- Soporte de tipos datetime e integer con validación de entrada
+- Persistencia de configuración de columnas adicionales
+- Ventana Acerca De con nombre, versión, features y año
 
 ## Requirements
 
@@ -75,7 +76,7 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 
 ### Active
 
-(Next milestone — no requirements defined yet)
+(v1.2 — requirements defined in REQUIREMENTS.md)
 
 ### Out of Scope
 
@@ -92,6 +93,8 @@ El formato DBF es ampliamente utilizado en sistemas legacy (Clipper, FoxPro, dBA
 **v1.0 shipped:** 4 dias de desarrollo, 16 feat commits, 90 tests, publicacion self-contained win-x64.
 
 **v1.1 shipped:** 2026-07-11 — 4 fases adicionales (5-8), 18 tareas de correcciones y optimizaciones. 0 regresiones, 90 tests siguen pasando. Codebase: ~9,500 LOC C#/XAML, 1,091 LOC tests.
+
+**v1.2 started:** Columnas Personalizadas en Traspaso Sybase + Acerca De.
 
 El proyecto cuenta con documentacion:
 - `docs/PRD.md` — Product Requirements Document con 8 RF y 6 RNF
@@ -143,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-11 after v1.1 milestone shipped*
+*Last updated: 2026-07-11 after v1.2 milestone started*

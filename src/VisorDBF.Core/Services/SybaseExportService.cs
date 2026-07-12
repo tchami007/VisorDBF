@@ -90,17 +90,19 @@ public sealed class SybaseExportService : ISybaseExportService
             log.WriteLine($"Connection opened successfully", sw.Elapsed);
 
             var columns = await _columnMappingService.LoadColumnTypesAsync(connection, config.TableName, file.Fields, log, cancellationToken);
+            var extraInfos = CreateExtraColumnInfos(config.ExtraColumns);
+            var allColumns = columns.Concat(extraInfos).ToList();
 
-            log.WriteLine($"Building INSERT command for {columns.Count} columns...");
-            var insertSql = BuildInsertSql(config.TableName, columns);
+            log.WriteLine($"Building INSERT command for {allColumns.Count} columns ({columns.Count} DBF + {extraInfos.Count} extra)...");
+            var insertSql = BuildInsertSql(config.TableName, allColumns);
             log.WriteLine($"INSERT SQL: {insertSql}");
 
             await using var command = new OdbcCommand(insertSql, connection);
             command.CommandType = CommandType.Text;
             command.CommandTimeout = CommandTimeoutSec;
 
-            var parameters = new OdbcParameter[columns.Count];
-            for (int i = 0; i < columns.Count; i++)
+            var parameters = new OdbcParameter[allColumns.Count];
+            for (int i = 0; i < allColumns.Count; i++)
             {
                 parameters[i] = new OdbcParameter($"@p{i}", OdbcType.VarChar);
                 command.Parameters.Add(parameters[i]);
@@ -127,7 +129,7 @@ public sealed class SybaseExportService : ISybaseExportService
                     log.WriteLine($"Batch: records {batchStart}-{batchEnd - 1}");
 
                     var (batchProcessed, batchSkipped, batchFailed) = await TryProcessBatchAsync(
-                        connection, command, parameters, columns,
+                        connection, command, parameters, allColumns,
                         records, batchStart, batchEnd, log, cancellationToken);
 
                     processed += batchProcessed;
@@ -137,7 +139,7 @@ public sealed class SybaseExportService : ISybaseExportService
                     {
                         log.WriteLine($"Batch {batchStart}-{batchEnd - 1} failed after retry, falling back to individual inserts");
                         var (indivProcessed, indivSkipped) = await ProcessIndividualWithFallbackAsync(
-                            connection, command, parameters, columns,
+                            connection, command, parameters, allColumns,
                             records, batchStart, batchEnd, log, cancellationToken);
 
                         processed += indivProcessed;
@@ -316,6 +318,48 @@ public sealed class SybaseExportService : ISybaseExportService
         }
     }
 
+    internal static List<ColumnInfo> CreateExtraColumnInfos(IReadOnlyList<ExtraColumnConfig> extraColumns)
+    {
+        var result = new List<ColumnInfo>(extraColumns.Count);
+        foreach (var ec in extraColumns)
+        {
+            var dbTypeName = ec.Type == ExtraColumnType.Integer ? "int" : "datetime";
+            var odbcType = ec.Type == ExtraColumnType.Integer ? OdbcType.Int : OdbcType.DateTime;
+            var convertFunc = CreateExtraColumnConvert(ec);
+            result.Add(new ColumnInfo(ec.ColumnName, odbcType, dbTypeName, 0, 0, convertFunc));
+        }
+        return result;
+    }
+
+    private static Func<object?, object?> CreateExtraColumnConvert(ExtraColumnConfig ec)
+    {
+        var ci = CultureInfo.InvariantCulture;
+        return ec.Type switch
+        {
+            ExtraColumnType.Integer => _ =>
+            {
+                var trimmed = ec.RawValue.Trim();
+                try { int.Parse(trimmed, NumberStyles.Any, ci); }
+                catch
+                {
+                    throw new ExportException(
+                        $"Columna adicional '{ec.ColumnName}': el valor '{ec.RawValue}' no es un entero valido.", "");
+                }
+                return trimmed;
+            },
+            ExtraColumnType.DateTime => _ =>
+            {
+                var dateStr = ec.RawValue.Trim();
+                if (!DateTime.TryParse(dateStr, ci, DateTimeStyles.None, out var dt)
+                    && !DateTime.TryParseExact(dateStr, ["yyyy-MM-dd", "dd/MM/yyyy", "yyyyMMdd"], ci, DateTimeStyles.None, out dt))
+                    throw new ExportException(
+                        $"Columna adicional '{ec.ColumnName}': el valor '{ec.RawValue}' no es una fecha valida.", "");
+                return dt.ToString("yyyy-MM-dd HH:mm:ss", ci);
+            },
+            _ => throw new ArgumentOutOfRangeException(nameof(ec.Type))
+        };
+    }
+
     private static string BuildConnectionString(SybaseConnectionConfig config) =>
         config.BuildConnectionString();
 
@@ -339,6 +383,10 @@ public sealed class SybaseExportService : ISybaseExportService
                 var s = c.Scale > 0 ? c.Scale : 0;
                 return $"CONVERT(NUMERIC({p},{s}), @p{i})";
             }
+            if (lower is "int" or "integer" or "smallint" or "tinyint" or "bigint")
+                return $"CONVERT(INT, @p{i})";
+            if (lower is "datetime" or "smalldatetime")
+                return $"CONVERT(DATETIME, @p{i})";
             return $"@p{i}";
         }));
         return $"INSERT INTO {tableName} ({colNames}) VALUES ({paramNames})";

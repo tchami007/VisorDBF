@@ -46,6 +46,9 @@ public sealed class MainViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(HasFile));
                 OnPropertyChanged(nameof(WindowTitle));
+                OnPropertyChanged(nameof(CanExport));
+                OnPropertyChanged(nameof(CanTransferToSybase));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
     }
@@ -65,7 +68,11 @@ public sealed class MainViewModel : ViewModelBase
     public bool IsLoading
     {
         get => _isLoading;
-        private set => SetField(ref _isLoading, value);
+        private set
+        {
+            if (SetField(ref _isLoading, value))
+                CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     public string StatusMessage
@@ -117,7 +124,10 @@ public sealed class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref _sybaseConfig, value))
+            {
                 OnPropertyChanged(nameof(CanTransferToSybase));
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
 
@@ -173,6 +183,7 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand ConfigureSybaseCommand { get; }
     public ICommand TransferToSybaseCommand { get; }
     public ICommand OpenRecentFileCommand { get; }
+    public ICommand AboutCommand { get; }
 
     public MainViewModel(
         IDbfReaderService dbfReaderService,
@@ -230,6 +241,7 @@ public sealed class MainViewModel : ViewModelBase
         TransferToSybaseCommand = new RelayCommand(
             async _ => await TransferToSybaseAsync(),
             _ => CanTransferToSybase);
+        AboutCommand = new RelayCommand(_ => ShowAboutDialog());
     }
 
     private async Task OpenFileAsync()
@@ -478,6 +490,7 @@ public sealed class MainViewModel : ViewModelBase
         var dialog = new SybaseConnectionDialog { DataContext = configVm };
         dialog.Owner = Application.Current.MainWindow;
         dialog.ShowDialog();
+        CommandManager.InvalidateRequerySuggested();
         await Task.CompletedTask;
     }
 
@@ -539,6 +552,12 @@ public sealed class MainViewModel : ViewModelBase
             _exportCts?.Dispose();
             _exportCts = null;
         }
+    }
+
+    private void ShowAboutDialog()
+    {
+        var dialog = new AboutDialog { Owner = Application.Current.MainWindow };
+        dialog.ShowDialog();
     }
 
     private void AddToRecentFiles(string filePath)

@@ -69,7 +69,8 @@
                           Command="{Binding ConfigureSybaseCommand}"/>
             </MenuItem>
             <MenuItem Header="Ayuda">
-                <MenuItem Header="Acerca de..." IsEnabled="False"/>
+                <MenuItem Header="Acerca de..."
+                          Command="{Binding AboutCommand}"/>
             </MenuItem>
         </Menu>
 

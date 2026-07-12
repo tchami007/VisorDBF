@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Conectar a Sybase ASE"
-        Width="480" Height="480"
+        Width="480" Height="520"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="#FFFFFF"
@@ -77,6 +77,65 @@
                         <TextBox Text="{Binding TableName}"
                                  Width="200" HorizontalAlignment="Left" Height="24"
                                  ToolTip="La tabla debe existir en la base de datos y tener columnas con los mismos nombres que los campos DBF"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Columnas adicionales" Margin="0,0,0,12">
+                    <StackPanel Margin="8">
+                        <TextBlock Text="Agregue columnas que existen en la tabla destino pero no en el archivo DBF:"
+                                   FontSize="11" Foreground="#5E5E5E"
+                                   TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding ExtraColumns}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="1"
+                                            CornerRadius="4" Padding="6" Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="85"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="28"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding ColumnName, UpdateSourceTrigger=PropertyChanged}"
+                                                     ToolTip="Nombre de la columna en Sybase"
+                                                     Height="24" Margin="0,0,4,0"/>
+
+                                            <ComboBox Grid.Column="1"
+                                                      SelectedIndex="{Binding Type}"
+                                                      Height="24" Margin="0,0,4,0">
+                                                <ComboBoxItem Content="DateTime"/>
+                                                <ComboBoxItem Content="Integer"/>
+                                            </ComboBox>
+
+                                            <TextBox Grid.Column="2"
+                                                     Text="{Binding RawValue, UpdateSourceTrigger=PropertyChanged}"
+                                                     ToolTip="Valor fijo: fecha (2026-01-01) o entero (202601)"
+                                                     Height="24" Margin="0,0,4,0"/>
+
+                                            <Button Grid.Column="3"
+                                                    Content="✕"
+                                                    Width="24" Height="24" Padding="0"
+                                                    FontSize="11"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding DataContext.RemoveExtraColumnCommand,
+                                                        RelativeSource={RelativeSource AncestorType=GroupBox}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="+ Agregar columna"
+                                Command="{Binding AddExtraColumnCommand}"
+                                Width="140" Height="26"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
                     </StackPanel>
                 </GroupBox>
 
