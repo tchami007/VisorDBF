@@ -24,7 +24,7 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 - Traspaso directo a Sybase ASE via ODBC con probe de conversiones y logging
 - Publicacion self-contained win-x64
 
-**Codebase:** 102 files, ~9,244 LOC C#/XAML, 1,091 LOC tests, 90 tests
+**Codebase:** ~9,500 LOC C#/XAML, 1,091 LOC tests, 105 tests
 **Tech stack:** .NET 8 LTS, WPF/MVVM, DbfDataReader, System.Text.Json, ODBC
 
 ## Latest Milestone: v1.2 — Columnas Personalizadas en Traspaso Sybase (SHIPPED)
@@ -71,10 +71,18 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 - ✓ PERF-04: Capacity hint en DbfReaderService — v1.1
 - ✓ PERF-05: RegisterProvider redundante eliminado — v1.1
 - ✓ PERF-06: SanitizeFileName optimizado — v1.1
+- ✓ SYB-01: Agregar columnas adicionales en UI de traspaso Sybase — v1.2
+- ✓ SYB-02: Validación de valor por tipo (datetime/integer) — v1.2
+- ✓ SYB-03: Eliminar columnas adicionales de la lista — v1.2
+- ✓ SYB-04: Columnas adicionales en INSERT de cada registro — v1.2
+- ✓ SYB-05: Persistencia de columnas adicionales entre sesiones — v1.2
+- ✓ SYB-06: Columnas adicionales en resultado del probe — v1.2
+- ✓ ACERCA-01: Ventana Acerca De desde menú Ayuda — v1.2
+- ✓ ACERCA-02: Nombre, versión, features y año en Acerca De — v1.2
 
 ### Active
 
-(v1.2 — requirements defined in REQUIREMENTS.md)
+(Next milestone — requirements to be defined)
 
 ### Out of Scope
 
@@ -92,7 +100,7 @@ El formato DBF es ampliamente utilizado en sistemas legacy (Clipper, FoxPro, dBA
 
 **v1.1 shipped:** 2026-07-11 — 4 fases adicionales (5-8), 18 tareas de correcciones y optimizaciones. 0 regresiones, 90 tests siguen pasando. Codebase: ~9,500 LOC C#/XAML, 1,091 LOC tests.
 
-**v1.2 shipped:** 2026-07-12 — Columnas Personalizadas en Traspaso Sybase. Extra columns model, UI, persistence, probe integration, About dialog. 105 tests pass.
+**v1.2 shipped:** 2026-07-12 — Columnas Personalizadas en Traspaso Sybase. Extra columns model, UI, persistence, probe integration, About dialog. 105 tests pass, 0 regresiones.
 
 El proyecto cuenta con documentacion:
 - `docs/PRD.md` — Product Requirements Document con 8 RF y 6 RNF
@@ -124,6 +132,9 @@ El proyecto cuenta con documentacion:
 | Language Driver ID como codificacion por defecto | DBF embebe codificacion en header; reduce friccion | ✓ Validated |
 | CurrentCulture en grilla, InvariantCulture en exportacion | D-08: grid muestra formato local, export produce datos portables | ✓ Validated |
 | SybaseConfig sin password en persistencia | Seguridad por diseno — password se ingresa cada sesion | ✓ Validated |
+| Virtual ColumnInfo para columnas extra | Extra columns reciben ColumnInfo entries sin cambios de interfaz | ✓ Validated |
+| ExtraColumnEntryViewModel por fila | VM separada por fila para binding y validación limpia | ✓ Validated |
+| Empty-list default para ExtraColumns | Legacy settings.json sin propiedad se deserializan sin error | ✓ Validated |
 
 ## Evolution
 
@@ -144,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-11 after v1.2 milestone started*
+*Last updated: 2026-07-12 after v1.2 milestone shipped*

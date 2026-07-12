@@ -1,5 +1,22 @@
 # Project Milestones: VisorDBF
 
+## v1.2 — Columnas Personalizadas en Traspaso Sybase (Shipped: 2026-07-12)
+
+**Delivered:** Columnas adicionales configurables con tipo datetime/integer en traspaso Sybase, validación en tiempo real, persistencia entre sesiones, probe extendido, ventana Acerca De.
+
+**Phases completed:** 3 phases, 3 plans, 23 tasks
+
+**Key accomplishments:**
+
+- Columna adicional tipo enum (ExtraColumnType) + record ExtraColumnConfig con virtual ColumnInfo injection en SybaseExportService
+- UI en SybaseConnectionDialog con ItemsControl, add/remove commands y validación por tipo
+- Persistencia automática en settings.json mediante System.Text.Json con default empty-list para legacy
+- Probe extendido con columnas extra concatenadas y conversiones verificadas
+- Ventana Acerca De con nombre, versión (assembly), features y año de copyright
+- 12 nuevos tests, 0 regresiones, 105 tests en total
+
+---
+
 ## v1.1 — Mejoras Técnicas (Shipped: 2026-07-11)
 
 **Delivered:** Correcciones críticas, refactorización de diseño y optimizaciones de rendimiento .NET sobre la base v1.0.
