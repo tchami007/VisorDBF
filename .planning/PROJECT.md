@@ -27,11 +27,9 @@ Un usuario puede abrir cualquier archivo DBF, ver su contenido inmediatamente y 
 **Codebase:** 102 files, ~9,244 LOC C#/XAML, 1,091 LOC tests, 90 tests
 **Tech stack:** .NET 8 LTS, WPF/MVVM, DbfDataReader, System.Text.Json, ODBC
 
-## Current Milestone: v1.2 — Columnas Personalizadas en Traspaso Sybase
+## Latest Milestone: v1.2 — Columnas Personalizadas en Traspaso Sybase (SHIPPED)
 
-**Goal:** Permitir al usuario configurar columnas adicionales (nombre, tipo datetime/integer, valor fijo) que se inyectan en cada INSERT al destino Sybase, más ventana Acerca De.
-
-**Target features:**
+**Delivered features:**
 - Configuración de columnas adicionales con nombre, tipo y valor en UI de traspaso Sybase
 - Soporte de tipos datetime e integer con validación de entrada
 - Persistencia de configuración de columnas adicionales
@@ -94,7 +92,7 @@ El formato DBF es ampliamente utilizado en sistemas legacy (Clipper, FoxPro, dBA
 
 **v1.1 shipped:** 2026-07-11 — 4 fases adicionales (5-8), 18 tareas de correcciones y optimizaciones. 0 regresiones, 90 tests siguen pasando. Codebase: ~9,500 LOC C#/XAML, 1,091 LOC tests.
 
-**v1.2 started:** Columnas Personalizadas en Traspaso Sybase + Acerca De.
+**v1.2 shipped:** 2026-07-12 — Columnas Personalizadas en Traspaso Sybase. Extra columns model, UI, persistence, probe integration, About dialog. 105 tests pass.
 
 El proyecto cuenta con documentacion:
 - `docs/PRD.md` — Product Requirements Document con 8 RF y 6 RNF
