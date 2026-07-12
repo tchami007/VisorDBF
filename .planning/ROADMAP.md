@@ -12,7 +12,7 @@
 |---|-------|------|--------------|------------------|
 | 9 | Columnas Adicionales — Modelo + Servicio | Implementar modelo ExtraColumnConfig e inyectar columnas extra en INSERT/parámetros | SYB-04 | 4 |
 | 10 | Columnas Adicionales — UI | Agregar UI en diálogo Sybase para gestionar columnas extra con validación | SYB-01, SYB-02, SYB-03 | 5 |
-| 11 | Persistencia + Acerca De + Probe | Persistir config, mostrar columnas extra en probe, agregar ventana Acerca De | SYB-05, SYB-06, ACERCA-01, ACERCA-02 | 5 |
+| 11 | Persistencia + Acerca De + Probe | 1/1 | Complete    | 2026-07-12 |
 
 ---
 
@@ -23,12 +23,14 @@
 **Requirements:** SYB-04
 
 **Success criteria:**
+
 1. `ExtraColumnConfig` record existe con propiedades `ColumnName`, `Type` (DateTime|Integer), `RawValue`
 2. `SybaseConnectionConfig` tiene propiedad `ExtraColumns` con default empty list
 3. `BuildInsertSql` genera column names + parámetros incluyendo columnas extra
 4. `SetParameterValues` asigna valores fijos convertidos a los parámetros extra
 
 **Tasks:**
+
 - Crear `ExtraColumnConfig` model y `ExtraColumnType` enum
 - Agregar `ExtraColumns` a `SybaseConnectionConfig`
 - Modificar `BuildInsertSql` para incluir columnas extra
@@ -47,6 +49,7 @@
 **Requirements:** SYB-01, SYB-02, SYB-03
 
 **Success criteria:**
+
 1. Grupo "Columnas adicionales" visible en `SybaseConnectionDialog` debajo de "Tabla destino"
 2. Usuario puede agregar columna (nombre + tipo + valor) mediante botón "Agregar"
 3. Validación de valor: datetime rechaza strings no-fecha, integer rechaza no-numéricos
@@ -54,6 +57,7 @@
 5. Las columnas configuradas se pasan al servicio al iniciar traspaso
 
 **Tasks:**
+
 - Agregar `ExtraColumns` observable collection a `SybaseConnectionViewModel`
 - Agregar `AddExtraColumnCommand`, `RemoveExtraColumnCommand`
 - Agregar validación de valor según tipo (tiempo real)
@@ -70,6 +74,7 @@
 **Requirements:** SYB-05, SYB-06, ACERCA-01, ACERCA-02
 
 **Success criteria:**
+
 1. ExtraColumns se guarda y restaura desde settings.json
 2. Probe muestra columnas extra con sus valores convertidos
 3. Menú Ayuda > "Acerca de VisorDBF" abre ventana modal
@@ -77,6 +82,7 @@
 5. Settings legacy sin extraColumns no causan error de deserialización
 
 **Tasks:**
+
 - Verificar serialización/deserialización de `ExtraColumns` en `JsonSettingsService`
 - Modificar `SybaseProbeService` o resultado del probe para incluir columnas extra
 - Crear `AboutDialog.xaml` + `AboutDialog.xaml.cs`
@@ -111,6 +117,7 @@ Phase 9 tiene que completarse antes que la 10 (la UI necesita el modelo). Phase 
 | ACERCA-02 | Phase 11 |
 
 **Coverage:**
+
 - v1.2 requirements: 8 total
 - Mapped to phases: 8 ✓
 - Unmapped: 0 ✓

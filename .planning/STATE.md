@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Columnas Personalizadas en Traspaso Sybase
+current_phase: 11
 status: completed
-last_updated: "2026-07-11T13:30:00.000Z"
-last_activity: 2026-07-11
+last_updated: "2026-07-12T17:56:42.886Z"
+last_activity: 2026-07-12
+last_activity_desc: Phase 11 complete
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 3
   completed_plans: 3
   percent: 100
-  current_phase: 11
-  current_phase_name: Persistencia + Acerca De + Probe
 ---
 
 # Project State: VisorDBF
 
 **Last updated:** 2026-07-11
 **Current milestone:** v1.2 — Columnas Personalizadas en Traspaso Sybase
-**Status:** ✅ Completed
+**Status:** Milestone complete
 
 ---
 
@@ -42,6 +42,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-11 after v1.2 milestone started)
 | 11 | Persistencia + Acerca De + Probe | ✅ |
 
 ### Features delivered
+
 - **SYB-01/02**: ExtraColumnType enum + ExtraColumnConfig record
 - **SYB-03**: ExtraColumns property on SybaseConnectionConfig
 - **SYB-04**: Virtual ColumnInfo + fixed-value Convert in export pipeline
@@ -54,10 +55,12 @@ See: `.planning/PROJECT.md` (updated 2026-07-11 after v1.2 milestone started)
 ## Milestone Archive
 
 Milestone v1.0 archived:
+
 - `.planning/milestones/v1.0-ROADMAP.md`
 - `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 Milestone v1.2 archived:
+
 - `.planning/milestones/v1.2-ROADMAP.md`
 - `.planning/milestones/v1.2-REQUIREMENTS.md`
 
@@ -65,10 +68,10 @@ Milestone v1.2 archived:
 
 ## Current Position
 
-Phase: —
-Plan: —
+Phase: 11
+Plan: Not started
 Status: Milestone v1.2 complete — awaiting next milestone
-Last activity: 2026-07-11 — Phase 11 complete (persistence, probe, About dialog)
+Last activity: 2026-07-12 — Phase 11 complete
 
 ## Session Log
 
